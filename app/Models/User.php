@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -22,6 +22,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'nama_klub',
+        'whatsapp',
+        'is_active',
     ];
 
     /**
@@ -44,6 +48,36 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    // --- Role Helpers ---
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isPerkumpulan(): bool
+    {
+        return $this->role === 'perkumpulan';
+    }
+
+    // --- Relasi ---
+
+    public function pendaftaran(): HasMany
+    {
+        return $this->hasMany(Pendaftaran::class);
+    }
+
+    public function masterRiwayatAtlet(): HasMany
+    {
+        return $this->hasMany(MasterRiwayatAtlet::class);
+    }
+
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class);
     }
 }
