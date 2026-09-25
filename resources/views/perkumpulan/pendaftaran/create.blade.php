@@ -47,6 +47,10 @@
                             <label for="tanggal_lahir" class="block text-sm font-bold text-slate-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
                             <input type="date" name="tanggal_lahir" id="tanggal_lahir" value="{{ old('tanggal_lahir') }}" required
                                 class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4 bg-slate-50 hover:bg-white transition-colors">
+                            <!-- Info KU hasil deteksi otomatis -->
+                            <div id="ku-suggestion" class="mt-2 hidden">
+                                <p class="text-xs text-indigo-600 font-medium" id="ku-suggestion-text"></p>
+                            </div>
                         </div>
 
                         <div>
@@ -63,47 +67,53 @@
                     <hr class="border-slate-100">
 
                     <!-- Pemilihan Kategori Lomba -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="kelompok_umur_id" class="block text-sm font-bold text-slate-700 mb-1">Kelompok Umur (KU) <span class="text-red-500">*</span></label>
-                            <select name="kelompok_umur_id" id="kelompok_umur_id" required
-                                class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4 bg-slate-50 hover:bg-white transition-colors">
-                                <option value="">-- Pilih Kelompok Umur --</option>
-                                @foreach($kelompokUmur as $ku)
-                                    <option value="{{ $ku->id }}" data-nomor='@json($ku->nomorLomba)' {{ old('kelompok_umur_id') == $ku->id ? 'selected' : '' }}>
-                                        {{ $ku->nama_ku }} ({{ $ku->usia_min ?? 0 }} - {{ $ku->usia_max ?? 'Unlimited' }} thn)
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="nomor_lomba_id" class="block text-sm font-bold text-slate-700 mb-1">Nomor Lomba <span class="text-red-500">*</span></label>
-                            <select name="nomor_lomba_id" id="nomor_lomba_id" required disabled
-                                class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4 bg-slate-100 cursor-not-allowed">
-                                <option value="">-- Pilih Nomor Lomba --</option>
-                            </select>
-                        </div>
+                    <div>
+                        <label for="kelompok_umur_id" class="block text-sm font-bold text-slate-700 mb-1">Kelompok Umur (KU) <span class="text-red-500">*</span></label>
+                        <select name="kelompok_umur_id" id="kelompok_umur_id" required
+                            class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4 bg-slate-50 hover:bg-white transition-colors">
+                            <option value="">-- Pilih Kelompok Umur --</option>
+                            @foreach($kelompokUmur as $ku)
+                                <option value="{{ $ku->id }}"
+                                    data-nomor='@json($ku->nomorLomba)'
+                                    data-usia-min="{{ $ku->usia_min ?? 0 }}"
+                                    data-usia-max="{{ $ku->usia_max ?? 999 }}"
+                                    {{ old('kelompok_umur_id') == $ku->id ? 'selected' : '' }}>
+                                    {{ $ku->nama_ku }} ({{ $ku->usia_min ?? 0 }} - {{ $ku->usia_max ?? 'Unlimited' }} thn)
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
 
-                    <!-- Limit Waktu & Auto Match -->
-                    <div class="bg-indigo-50 rounded-xl p-5 border border-indigo-100">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <label for="limit_waktu" class="block text-sm font-bold text-indigo-900 mb-1">Limit Waktu (Opsional)</label>
-                                <p class="text-xs text-indigo-600 mb-3">Format: <span class="font-mono">MM:SS.ss</span> (contoh: 01:23.45). Jika dikosongkan, sistem akan mencoba mengambil dari riwayat (auto-match).</p>
-                                <input type="text" name="limit_waktu" id="limit_waktu" value="{{ old('limit_waktu') }}"
-                                    class="block w-full md:w-1/2 rounded-xl border-indigo-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4 font-mono bg-white"
-                                    placeholder="MM:SS.ss">
+                    <!-- Nomor Lomba — Checklist + input waktu per nomor -->
+                    <div>
+                        <div class="flex items-end justify-between mb-1">
+                            <label class="block text-sm font-bold text-slate-700">
+                                Nomor Lomba <span class="text-red-500">*</span>
+                                <span class="text-xs font-normal text-slate-500 ml-1">(Bisa pilih lebih dari 1)</span>
+                            </label>
+                            <span class="text-xs text-slate-400 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Input waktu bersifat opsional per nomor
+                            </span>
+                        </div>
+
+                        <!-- Placeholder saat KU belum dipilih -->
+                        <div id="nomor-lomba-placeholder" class="rounded-xl border border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-400">
+                            <svg class="w-6 h-6 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            Pilih Kelompok Umur terlebih dahulu
+                        </div>
+
+                        <!-- Container checklist nomor lomba -->
+                        <div id="nomor-lomba-checklist" class="hidden">
+                            <div id="nomor-lomba-items" class="rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+                                <!-- Di-render oleh JavaScript -->
                             </div>
-                            
-                            <div class="ml-4 flex flex-col items-end">
-                                <button type="button" id="btnAutoMatch" class="inline-flex items-center px-4 py-2 bg-white text-indigo-700 border border-indigo-200 rounded-lg text-sm font-semibold hover:bg-indigo-100 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Auto Match Waktu
-                                </button>
-                                <div id="autoMatchStatus" class="mt-2 text-xs font-medium text-right hidden"></div>
+                            <div id="nomor-lomba-empty" class="hidden rounded-xl border border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-400">
+                                Tidak ada nomor lomba tersedia untuk kelompok umur &amp; jenis kelamin ini.
                             </div>
+                            <p id="nomor-lomba-counter" class="mt-2 text-xs text-right"></p>
                         </div>
                     </div>
                 </div>
@@ -124,34 +134,41 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const inputNama = document.getElementById('nama_atlet');
-        const inputTglLahir = document.getElementById('tanggal_lahir');
-        const inputGender = document.getElementById('jenis_kelamin');
-        const resultsContainer = document.getElementById('autocomplete-results');
-        
-        const selectKu = document.getElementById('kelompok_umur_id');
-        const selectNomor = document.getElementById('nomor_lomba_id');
-        
-        const inputLimitWaktu = document.getElementById('limit_waktu');
-        const btnAutoMatch = document.getElementById('btnAutoMatch');
-        const autoMatchStatus = document.getElementById('autoMatchStatus');
+        const inputNama         = document.getElementById('nama_atlet');
+        const inputTglLahir     = document.getElementById('tanggal_lahir');
+        const inputGender       = document.getElementById('jenis_kelamin');
+        const resultsContainer  = document.getElementById('autocomplete-results');
+
+        const selectKu          = document.getElementById('kelompok_umur_id');
+        const kuSuggestion      = document.getElementById('ku-suggestion');
+        const kuSuggestionText  = document.getElementById('ku-suggestion-text');
+
+        const placeholder       = document.getElementById('nomor-lomba-placeholder');
+        const checklist         = document.getElementById('nomor-lomba-checklist');
+        const itemsContainer    = document.getElementById('nomor-lomba-items');
+        const emptyMsg          = document.getElementById('nomor-lomba-empty');
+        const counter           = document.getElementById('nomor-lomba-counter');
+
+        const autoMatchRoute    = `{{ route('perkumpulan.autocomplete.waktu') }}`;
+        const oldLimitWaktu     = @json(old('limit_waktu_per_nomor', []));
 
         let timeoutId;
 
+        // ─────────────────────────────────────────────
         // 1. Auto-complete Nama Atlet
+        // ─────────────────────────────────────────────
         inputNama.addEventListener('input', function() {
             clearTimeout(timeoutId);
             const query = this.value.trim();
-            
+
             if (query.length < 2) {
                 resultsContainer.classList.add('hidden');
-                checkAutoMatchEligibility();
                 return;
             }
 
             timeoutId = setTimeout(() => {
                 fetch(`{{ route('perkumpulan.autocomplete.atlet') }}?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
+                    .then(r => r.json())
                     .then(data => {
                         resultsContainer.innerHTML = '';
                         if (data.length > 0) {
@@ -164,11 +181,15 @@
                                 `;
                                 div.addEventListener('click', () => {
                                     inputNama.value = atlet.nama_atlet;
-                                    if(atlet.tanggal_lahir) inputTglLahir.value = atlet.tanggal_lahir;
-                                    if(atlet.jenis_kelamin) inputGender.value = atlet.jenis_kelamin;
-                                    
+                                    if (atlet.tanggal_lahir) {
+                                        inputTglLahir.value = atlet.tanggal_lahir;
+                                        autoDetectKU();
+                                    }
+                                    if (atlet.jenis_kelamin) {
+                                        inputGender.value = atlet.jenis_kelamin;
+                                        updateNomorLombaChecklist();
+                                    }
                                     resultsContainer.classList.add('hidden');
-                                    checkAutoMatchEligibility();
                                 });
                                 resultsContainer.appendChild(div);
                             });
@@ -180,105 +201,236 @@
             }, 300);
         });
 
-        // Hide autocomplete when clicking outside
         document.addEventListener('click', function(e) {
-            if (e.target !== inputNama && e.target !== resultsContainer) {
+            if (e.target !== inputNama && !resultsContainer.contains(e.target)) {
                 resultsContainer.classList.add('hidden');
             }
         });
 
-        // 2. Dependent Dropdown (KU -> Nomor Lomba)
-        function updateNomorLombaDropdown() {
+        // ─────────────────────────────────────────────
+        // 2. Auto-detect KU dari Tanggal Lahir
+        // ─────────────────────────────────────────────
+        function getUmur(tglLahir) {
+            if (!tglLahir) return null;
+            const today = new Date();
+            const lahir = new Date(tglLahir);
+            let umur    = today.getFullYear() - lahir.getFullYear();
+            const m     = today.getMonth() - lahir.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < lahir.getDate())) umur--;
+            return umur;
+        }
+
+        function autoDetectKU() {
+            const umur = getUmur(inputTglLahir.value);
+            if (umur === null) { kuSuggestion.classList.add('hidden'); return; }
+
+            const options = Array.from(selectKu.options);
+            let matched   = null;
+            for (const opt of options) {
+                if (!opt.value) continue;
+                const min = parseInt(opt.dataset.usiaMin ?? 0);
+                const max = parseInt(opt.dataset.usiaMax ?? 999);
+                if (umur >= min && umur <= max) { matched = opt; break; }
+            }
+
+            if (matched) {
+                selectKu.value = matched.value;
+                kuSuggestionText.textContent = `✓ KU otomatis terdeteksi: ${matched.textContent.trim()} (Umur: ${umur} tahun)`;
+                kuSuggestion.classList.remove('hidden');
+            } else {
+                kuSuggestion.classList.add('hidden');
+            }
+            updateNomorLombaChecklist();
+        }
+
+        inputTglLahir.addEventListener('change', autoDetectKU);
+
+        // ─────────────────────────────────────────────
+        // 3. Render Checklist Nomor Lomba + Input Waktu
+        // ─────────────────────────────────────────────
+        function updateNomorLombaChecklist() {
             const selectedOption = selectKu.options[selectKu.selectedIndex];
-            selectNomor.innerHTML = '<option value="">-- Pilih Nomor Lomba --</option>';
-            
-            if (selectedOption && selectedOption.value) {
-                const nomorLomba = JSON.parse(selectedOption.dataset.nomor || '[]');
-                const selectedGender = inputGender.value;
-                
-                nomorLomba.forEach(nomor => {
-                    // Filter based on gender
-                    if (selectedGender && nomor.jenis_kelamin !== 'campuran' && nomor.jenis_kelamin !== selectedGender) {
-                        return;
-                    }
+            const selectedGender = inputGender.value;
+            const oldIds         = @json(old('nomor_lomba_ids', []));
 
-                    const option = document.createElement('option');
-                    option.value = nomor.id;
-                    option.textContent = `${nomor.nama_nomor} (${nomor.jarak}m ${nomor.gaya})`;
-                    // Re-select old value if exists
-                    if ('{{ old("nomor_lomba_id") }}' == nomor.id) {
-                        option.selected = true;
-                    }
-                    selectNomor.appendChild(option);
-                });
-                selectNomor.disabled = false;
-                selectNomor.classList.remove('bg-slate-100', 'cursor-not-allowed');
-                selectNomor.classList.add('bg-slate-50', 'hover:bg-white');
-            } else {
-                selectNomor.disabled = true;
-                selectNomor.classList.add('bg-slate-100', 'cursor-not-allowed');
-                selectNomor.classList.remove('bg-slate-50', 'hover:bg-white');
+            itemsContainer.innerHTML = '';
+            counter.textContent = '';
+
+            if (!selectedOption || !selectedOption.value) {
+                checklist.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                return;
             }
-            checkAutoMatchEligibility();
-        }
 
-        selectKu.addEventListener('change', updateNomorLombaDropdown);
-        inputGender.addEventListener('change', updateNomorLombaDropdown);
-        
-        // Trigger on load for old data
-        if (selectKu.value) {
-            updateNomorLombaDropdown();
-        }
+            const nomorLomba = JSON.parse(selectedOption.dataset.nomor || '[]');
+            const filtered   = nomorLomba.filter(n => {
+                if (!selectedGender) return true;
+                return n.jenis_kelamin === 'campuran' || n.jenis_kelamin === selectedGender;
+            });
 
-        // 3. Auto-Match Logic
-        function checkAutoMatchEligibility() {
-            const nama = inputNama.value.trim();
-            const nomorId = selectNomor.value;
+            placeholder.classList.add('hidden');
+            checklist.classList.remove('hidden');
 
-            if (nama.length > 0 && nomorId) {
-                btnAutoMatch.disabled = false;
-            } else {
-                btnAutoMatch.disabled = true;
+            if (filtered.length === 0) {
+                itemsContainer.classList.add('hidden');
+                emptyMsg.classList.remove('hidden');
+                return;
             }
-        }
 
-        inputNama.addEventListener('change', checkAutoMatchEligibility);
-        selectNomor.addEventListener('change', checkAutoMatchEligibility);
+            emptyMsg.classList.add('hidden');
+            itemsContainer.classList.remove('hidden');
 
-        btnAutoMatch.addEventListener('click', function() {
-            const nama = inputNama.value.trim();
-            const nomorId = selectNomor.value;
+            filtered.forEach(nomor => {
+                const isChecked   = oldIds.includes(String(nomor.id)) || oldIds.includes(nomor.id);
+                const oldWaktu    = (oldLimitWaktu && oldLimitWaktu[nomor.id]) ? oldLimitWaktu[nomor.id] : '';
+                const genderBadge = nomor.jenis_kelamin === 'campuran'
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Campuran</span>`
+                    : nomor.jenis_kelamin === 'putra'
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Putra</span>`
+                        : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-700">Putri</span>`;
 
-            if (!nama || !nomorId) return;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'transition-colors';
+                wrapper.innerHTML = `
+                    <!-- Baris checklist utama -->
+                    <label for="nomor_${nomor.id}" class="flex items-center gap-4 px-5 py-3.5 cursor-pointer hover:bg-indigo-50 transition-colors group">
+                        <input type="checkbox"
+                            name="nomor_lomba_ids[]"
+                            value="${nomor.id}"
+                            id="nomor_${nomor.id}"
+                            class="nomor-checkbox w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+                            ${isChecked ? 'checked' : ''}>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-semibold text-slate-800 text-sm group-hover:text-indigo-700 transition-colors">${nomor.nama_nomor}</span>
+                                ${genderBadge}
+                            </div>
+                            <div class="text-xs text-slate-500 mt-0.5">${nomor.jarak}m &bull; Gaya ${nomor.gaya}</div>
+                        </div>
+                        <div class="text-xs font-mono text-slate-300 shrink-0">#${nomor.id}</div>
+                    </label>
 
-            btnAutoMatch.disabled = true;
-            btnAutoMatch.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Mencari...';
+                    <!-- Panel input waktu — hanya tampil jika checkbox dicentang -->
+                    <div class="waktu-panel ${isChecked ? '' : 'hidden'} px-5 pb-4 bg-indigo-50 border-t border-indigo-100">
+                        <div class="flex items-center gap-3 pt-3">
+                            <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div class="flex-1">
+                                <label class="block text-xs font-semibold text-indigo-800 mb-1">
+                                    Limit Waktu
+                                    <span class="font-normal text-indigo-500 ml-1">(Opsional — kosongkan untuk auto-match dari riwayat)</span>
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <input type="text"
+                                        name="limit_waktu_per_nomor[${nomor.id}]"
+                                        class="waktu-input block w-36 rounded-lg border-indigo-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2 px-3 font-mono bg-white placeholder-slate-300"
+                                        placeholder="MM:SS.ss"
+                                        value="${oldWaktu}"
+                                        autocomplete="off">
+                                    <button type="button"
+                                        class="btn-auto-match inline-flex items-center gap-1.5 px-3 py-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                        data-nomor-id="${nomor.id}"
+                                        data-nomor-label="${nomor.nama_nomor} ${nomor.jarak}m ${nomor.gaya}"
+                                        disabled>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                        </svg>
+                                        Auto Match
+                                    </button>
+                                    <span class="auto-match-status text-xs font-medium hidden"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
 
-            fetch(`{{ route('perkumpulan.autocomplete.waktu') }}?nama_atlet=${encodeURIComponent(nama)}&nomor_lomba_id=${nomorId}`)
-                .then(response => response.json())
-                .then(data => {
-                    autoMatchStatus.classList.remove('hidden');
-                    if (data.limit_waktu) {
-                        inputLimitWaktu.value = data.limit_waktu;
-                        autoMatchStatus.textContent = data.message;
-                        autoMatchStatus.className = 'mt-2 text-xs font-medium text-right text-emerald-600';
+                // Toggle panel waktu saat checkbox berubah
+                const cb       = wrapper.querySelector('input[type=checkbox]');
+                const panel    = wrapper.querySelector('.waktu-panel');
+                const waktuIn  = wrapper.querySelector('.waktu-input');
+                const btnMatch = wrapper.querySelector('.btn-auto-match');
+                const statusEl = wrapper.querySelector('.auto-match-status');
+
+                cb.addEventListener('change', () => {
+                    if (cb.checked) {
+                        panel.classList.remove('hidden');
+                        checkBtnAutoMatch(btnMatch, waktuIn);
                     } else {
-                        inputLimitWaktu.value = '';
-                        autoMatchStatus.textContent = data.message;
-                        autoMatchStatus.className = 'mt-2 text-xs font-medium text-right text-amber-600';
+                        panel.classList.add('hidden');
+                        waktuIn.value = '';
                     }
-                })
-                .catch(error => {
-                    console.error('Error auto-match:', error);
-                    autoMatchStatus.textContent = 'Gagal melakukan auto-match.';
-                    autoMatchStatus.className = 'mt-2 text-xs font-medium text-right text-red-600';
-                    autoMatchStatus.classList.remove('hidden');
-                })
-                .finally(() => {
-                    btnAutoMatch.disabled = false;
-                    btnAutoMatch.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Auto Match Waktu';
+                    updateCounter();
                 });
-        });
+
+                // Aktifkan tombol auto-match jika nama atlet sudah diisi
+                inputNama.addEventListener('input', () => checkBtnAutoMatch(btnMatch, waktuIn));
+                inputNama.addEventListener('change', () => checkBtnAutoMatch(btnMatch, waktuIn));
+                checkBtnAutoMatch(btnMatch, waktuIn);
+
+                // Auto-match per nomor
+                btnMatch.addEventListener('click', function() {
+                    const nama    = inputNama.value.trim();
+                    const nomorId = this.dataset.nomorId;
+                    if (!nama) return;
+
+                    btnMatch.disabled = true;
+                    btnMatch.innerHTML = `<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Mencari...`;
+
+                    fetch(`${autoMatchRoute}?nama_atlet=${encodeURIComponent(nama)}&nomor_lomba_id=${nomorId}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            statusEl.classList.remove('hidden');
+                            if (data.limit_waktu) {
+                                waktuIn.value = data.limit_waktu;
+                                statusEl.textContent = '✓ ' + data.message;
+                                statusEl.className = 'auto-match-status text-xs font-medium text-emerald-600';
+                            } else {
+                                waktuIn.value = '';
+                                statusEl.textContent = '⚠ ' + data.message;
+                                statusEl.className = 'auto-match-status text-xs font-medium text-amber-600';
+                            }
+                        })
+                        .catch(() => {
+                            statusEl.textContent = '✗ Gagal auto-match.';
+                            statusEl.className = 'auto-match-status text-xs font-medium text-red-500';
+                            statusEl.classList.remove('hidden');
+                        })
+                        .finally(() => {
+                            btnMatch.disabled = false;
+                            btnMatch.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Auto Match`;
+                        });
+                });
+
+                itemsContainer.appendChild(wrapper);
+            });
+
+            updateCounter();
+        }
+
+        function checkBtnAutoMatch(btn, input) {
+            const nama = inputNama.value.trim();
+            if (btn && btn.closest('.waktu-panel') && !btn.closest('.waktu-panel').classList.contains('hidden')) {
+                btn.disabled = nama.length === 0;
+            }
+        }
+
+        function updateCounter() {
+            const total   = itemsContainer.querySelectorAll('.nomor-checkbox').length;
+            const checked = itemsContainer.querySelectorAll('.nomor-checkbox:checked').length;
+            counter.textContent = `${checked} dari ${total} nomor lomba dipilih`;
+            counter.className = checked > 0
+                ? 'mt-2 text-xs font-medium text-right text-indigo-600'
+                : 'mt-2 text-xs font-medium text-right text-slate-400';
+        }
+
+        selectKu.addEventListener('change', updateNomorLombaChecklist);
+        inputGender.addEventListener('change', updateNomorLombaChecklist);
+
+        // Trigger pada load untuk old() data
+        if (selectKu.value) {
+            updateNomorLombaChecklist();
+        }
     });
 </script>
 @endpush

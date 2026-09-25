@@ -14,19 +14,23 @@ class StorePendaftaranRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'kelompok_umur_id' => ['required', 'integer', 'exists:kelompok_umur,id'],
-            'nomor_lomba_id'   => ['required', 'integer', 'exists:nomor_lomba,id'],
-            'nama_atlet'       => ['required', 'string', 'max:255'],
-            'tanggal_lahir'    => ['required', 'date', 'before:today'],
-            'jenis_kelamin'    => ['required', 'in:putra,putri'],
-            'limit_waktu'      => ['nullable', 'string', 'regex:/^\d{1,2}:\d{2}\.\d{2}$/'],
+            'kelompok_umur_id'         => ['required', 'integer', 'exists:kelompok_umur,id'],
+            'nomor_lomba_ids'          => ['required', 'array', 'min:1'],
+            'nomor_lomba_ids.*'        => ['required', 'integer', 'exists:nomor_lomba,id'],
+            'nama_atlet'               => ['required', 'string', 'max:255'],
+            'tanggal_lahir'            => ['required', 'date', 'before:today'],
+            'jenis_kelamin'            => ['required', 'in:putra,putri'],
+            'limit_waktu_per_nomor'    => ['nullable', 'array'],
+            'limit_waktu_per_nomor.*'  => ['nullable', 'string', 'regex:/^\d{1,2}:\d{2}\.\d{2}$/'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'limit_waktu.regex' => 'Format limit waktu harus MM:SS.ss (contoh: 01:23.45)',
+            'nomor_lomba_ids.required'        => 'Pilih minimal 1 nomor lomba.',
+            'nomor_lomba_ids.min'             => 'Pilih minimal 1 nomor lomba.',
+            'limit_waktu_per_nomor.*.regex'   => 'Format limit waktu harus MM:SS.ss (contoh: 01:23.45)',
         ];
     }
 }

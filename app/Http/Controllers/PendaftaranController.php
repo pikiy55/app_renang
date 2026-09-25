@@ -59,35 +59,55 @@ class PendaftaranController extends Controller
             return back()->with('error', 'Deadline pendaftaran sudah berakhir.');
         }
 
-        $data = $request->validated();
+        $data              = $request->validated();
+        $nomorLombaIds     = $data['nomor_lomba_ids'];
+        $namaAtlet         = $data['nama_atlet'];
+        $limitWaktuPerNomor = $data['limit_waktu_per_nomor'] ?? [];
+        $daftarNomor       = [];
 
-        // Auto-match limit waktu dari riwayat
-        $nomorLomba = \App\Models\NomorLomba::findOrFail($data['nomor_lomba_id']);
-        $limitWaktu = $this->autoMatch->matchWaktu(
-            $data['nama_atlet'],
-            $nomorLomba->jarak,
-            $nomorLomba->gaya,
-            Auth::id()
-        );
+        foreach ($nomorLombaIds as $nomorLombaId) {
+            $nomorLomba = \App\Models\NomorLomba::findOrFail($nomorLombaId);
 
-        $statusWaktu = $limitWaktu ? 'normal' : 'NT';
+            // Cek apakah pelatih mengisi waktu untuk nomor ini
+            $inputWaktu = isset($limitWaktuPerNomor[$nomorLombaId]) && $limitWaktuPerNomor[$nomorLombaId] !== ''
+                ? $limitWaktuPerNomor[$nomorLombaId]
+                : null;
 
-        Pendaftaran::create([
-            'event_id'         => $event->id,
-            'user_id'          => Auth::id(),
-            'kelompok_umur_id' => $data['kelompok_umur_id'],
-            'nomor_lomba_id'   => $data['nomor_lomba_id'],
-            'nama_atlet'       => $data['nama_atlet'],
-            'tanggal_lahir'    => $data['tanggal_lahir'],
-            'jenis_kelamin'    => $data['jenis_kelamin'],
-            'limit_waktu'      => $data['limit_waktu'] ?? $limitWaktu,
-            'status_waktu'     => $data['limit_waktu'] ? 'normal' : $statusWaktu,
-            'is_locked'        => false,
-        ]);
+            // Jika tidak diisi pelatih, coba auto-match dari riwayat
+            $autoWaktu = null;
+            if (!$inputWaktu) {
+                $autoWaktu = $this->autoMatch->matchWaktu(
+                    $namaAtlet,
+                    $nomorLomba->jarak,
+                    $nomorLomba->gaya,
+                    Auth::id()
+                );
+            }
 
-        return redirect()->route('perkumpulan.dashboard')
-            ->with('success', "Atlet {$data['nama_atlet']} berhasil didaftarkan." .
-                ($statusWaktu === 'NT' ? ' Status NT (No Time) karena tidak ada riwayat waktu.' : ''));
+            $limitWaktu  = $inputWaktu ?? $autoWaktu;
+            $statusWaktu = $limitWaktu ? 'normal' : 'NT';
+
+            Pendaftaran::create([
+                'event_id'         => $event->id,
+                'user_id'          => Auth::id(),
+                'kelompok_umur_id' => $data['kelompok_umur_id'],
+                'nomor_lomba_id'   => $nomorLombaId,
+                'nama_atlet'       => $namaAtlet,
+                'tanggal_lahir'    => $data['tanggal_lahir'],
+                'jenis_kelamin'    => $data['jenis_kelamin'],
+                'limit_waktu'      => $limitWaktu,
+                'status_waktu'     => $statusWaktu,
+                'is_locked'        => false,
+            ]);
+
+            $daftarNomor[] = "{$nomorLomba->nama_nomor} ({$nomorLomba->jarak}m {$nomorLomba->gaya})";
+        }
+
+        $jumlah     = count($nomorLombaIds);
+        $listNomor  = implode(', ', $daftarNomor);
+        $successMsg = "Atlet {$namaAtlet} berhasil didaftarkan ke {$jumlah} nomor lomba: {$listNomor}.";
+
+        return redirect()->route('perkumpulan.dashboard')->with('success', $successMsg);
     }
 
     /**

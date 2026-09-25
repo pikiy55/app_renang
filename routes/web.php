@@ -38,6 +38,9 @@ Route::middleware(['auth', 'perkumpulan'])->prefix('perkumpulan')->name('perkump
     // Dashboard
     Route::get('/', [PendaftaranController::class, 'dashboard'])->name('dashboard');
 
+    // Rekap pendaftaran per event
+    Route::get('/events/{event}/pendaftaran', [PendaftaranController::class, 'eventPendaftaran'])->name('pendaftaran.index');
+
     // Pendaftaran atlet
     Route::get('/events/{event}/daftar', [PendaftaranController::class, 'create'])->name('pendaftaran.create');
     Route::post('/events/{event}/daftar', [PendaftaranController::class, 'store'])->name('pendaftaran.store');
