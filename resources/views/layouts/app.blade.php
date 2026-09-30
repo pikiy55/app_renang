@@ -29,7 +29,8 @@
                         @if(auth()->user()->role === 'admin')
                             <a href="{{ route('admin.events.index') }}" class="text-slate-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Admin Area</a>
                         @else
-                            <a href="{{ route('perkumpulan.dashboard') }}" class="text-slate-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Daftar Event</a>
+                            <a href="{{ route('perkumpulan.dashboard') }}" class="{{ request()->routeIs('perkumpulan.dashboard') ? 'text-indigo-600 font-semibold' : 'text-slate-600' }} hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Daftar Event</a>
+                            <a href="{{ route('perkumpulan.rekap') }}" class="{{ request()->routeIs('perkumpulan.rekap') ? 'text-indigo-600 font-semibold' : 'text-slate-600' }} hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Data Atlet & Rekap</a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}" class="ml-4">
                             @csrf

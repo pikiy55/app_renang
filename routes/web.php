@@ -95,6 +95,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // --- Import & Export ---
     Route::get('/import/riwayat', [Admin\ImportController::class, 'showForm'])->name('import.form');
     Route::post('/import/riwayat', [Admin\ImportController::class, 'riwayat'])->name('import.riwayat');
+    Route::get('/import/riwayat/template', [Admin\ImportController::class, 'downloadTemplate'])->name('import.template');
 
     Route::get('/export/pendaftaran/{event}', [Admin\ExportController::class, 'pendaftaran'])->name('export.pendaftaran');
 

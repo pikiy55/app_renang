@@ -1,111 +1,774 @@
 @extends('layouts.app')
 
-@section('title', 'Rekap Pendaftaran - Perkumpulan')
+@section('title', 'Data Atlet & Rekap Pendaftaran - Perkumpulan')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    {{-- Header --}}
-    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h2 class="text-2xl font-bold text-slate-800">Rekap Pendaftaran</h2>
-            <p class="text-sm text-slate-500 mt-1">Selamat datang, {{ auth()->user()->nama_klub ?? auth()->user()->name }}</p>
-        </div>
-        <a href="{{ route('perkumpulan.dashboard') }}" class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Kembali ke Daftar Event
-        </a>
-    </div>
+{{-- Hero Banner Perkumpulan --}}
+<div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            {{-- Profile Info --}}
+            <div class="flex items-start sm:items-center space-x-4">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white font-extrabold text-2xl sm:text-3xl shadow-inner shrink-0">
+                    {{ strtoupper(substr(auth()->user()->nama_klub ?? auth()->user()->name, 0, 2)) }}
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-indigo-500/30 text-indigo-200 text-xs font-semibold border border-indigo-400/30 uppercase tracking-wider">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Perkumpulan Renang
+                        </span>
+                        @if(auth()->user()->whatsapp)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 text-xs font-medium border border-emerald-400/20">
+                                <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981z"/></svg>
+                                {{ auth()->user()->whatsapp }}
+                            </span>
+                        @endif
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                        {{ auth()->user()->nama_klub ?? auth()->user()->name }}
+                    </h1>
+                    <p class="text-indigo-200 text-xs sm:text-sm mt-1 flex items-center gap-2">
+                        <span>PIC: <strong class="text-white">{{ auth()->user()->name }}</strong></span>
+                        <span>•</span>
+                        <span>{{ auth()->user()->email }}</span>
+                    </p>
+                </div>
+            </div>
 
+            {{-- Action Buttons --}}
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="{{ route('perkumpulan.dashboard') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-indigo-900 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-50 hover:shadow-lg transition-all duration-200">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Daftar Event Kejuaraan
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {{-- Alerts --}}
     @if(session('success'))
-        <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-start">
-            <svg class="w-5 h-5 mr-3 text-emerald-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-start shadow-sm animate-fadeIn">
+            <div class="bg-emerald-100 p-2 rounded-xl text-emerald-600 mr-3 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
             <div>
-                <h4 class="font-medium text-emerald-800">Berhasil!</h4>
-                <p class="text-sm mt-1">{{ session('success') }}</p>
+                <h4 class="font-bold text-emerald-900 text-sm">Berhasil!</h4>
+                <p class="text-sm mt-0.5 text-emerald-700">{{ session('success') }}</p>
             </div>
         </div>
     @endif
     @if(session('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-start">
-            <svg class="w-5 h-5 mr-3 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl flex items-start shadow-sm animate-fadeIn">
+            <div class="bg-red-100 p-2 rounded-xl text-red-600 mr-3 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
             <div>
-                <h4 class="font-medium text-red-800">Terdapat Kesalahan</h4>
-                <p class="text-sm mt-1">{{ session('error') }}</p>
+                <h4 class="font-bold text-red-900 text-sm">Perhatian</h4>
+                <p class="text-sm mt-0.5 text-red-700">{{ session('error') }}</p>
             </div>
         </div>
     @endif
 
-    {{-- Section Title --}}
-    <h3 class="text-lg font-bold text-slate-800 flex items-center mb-5">
-        <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-        Event Aktif
-        <span class="ml-2 text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{{ $events->count() }} event</span>
-    </h3>
+    {{-- Stats Cards Grid (KPI Metrics) --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
+        {{-- Card 1: Master Atlet --}}
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div class="absolute -right-4 -bottom-4 w-20 h-20 bg-indigo-50 rounded-full opacity-60"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Atlet Terdaftar</span>
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+            </div>
+            <p class="text-2xl sm:text-3xl font-extrabold text-slate-800">{{ $stats['total_master_atlet'] }}</p>
+            <p class="text-xs text-slate-500 mt-1 font-medium">Database atlet perkumpulan</p>
+        </div>
 
-    {{-- Event Cards Grid --}}
-    @forelse($events as $event)
-        @php
-            $isDeadlinePassed = $event->isDeadlinePassed();
-            $atletCount = $event->pendaftaran->where('user_id', auth()->id())->count();
-        @endphp
-        <a href="{{ route('perkumpulan.event.dashboard', $event) }}"
-           class="group block bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-md hover:border-indigo-200 transition-all duration-200 mb-4">
-            <div class="flex flex-col sm:flex-row">
-                {{-- Left: Color accent --}}
-                <div class="sm:w-2 {{ $isDeadlinePassed ? 'bg-slate-300' : 'bg-indigo-500' }} shrink-0"></div>
+        {{-- Card 2: Catatan Limit Waktu --}}
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div class="absolute -right-4 -bottom-4 w-20 h-20 bg-emerald-50 rounded-full opacity-60"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Catatan Waktu</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+            <p class="text-2xl sm:text-3xl font-extrabold text-slate-800">{{ $stats['total_riwayat_waktu'] }}</p>
+            <p class="text-xs text-slate-500 mt-1 font-medium">Rekor limit waktu tersimpan</p>
+        </div>
 
-                {{-- Content --}}
-                <div class="flex-1 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    {{-- Event Info --}}
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-1">
-                            <h4 class="font-bold text-slate-800 text-base group-hover:text-indigo-600 transition-colors truncate">
-                                {{ $event->nama_event }}
-                            </h4>
-                            @if($isDeadlinePassed)
-                                <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-100 text-red-600 border border-red-200">Ditutup</span>
-                            @else
-                                <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
-                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                    Dibuka
-                                </span>
-                            @endif
-                        </div>
-                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mt-1">
-                            <span class="inline-flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                {{ $event->tanggal_mulai->format('d M Y') }} – {{ $event->tanggal_selesai->format('d M Y') }}
-                            </span>
-                            <span class="inline-flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Deadline:
-                                <span class="font-semibold {{ $isDeadlinePassed ? 'text-red-500' : 'text-slate-700' }}">
-                                    {{ $event->deadline_pendaftaran->format('d M Y, H:i') }}
-                                </span>
-                            </span>
-                        </div>
+        {{-- Card 3: Pendaftaran Event --}}
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div class="absolute -right-4 -bottom-4 w-20 h-20 bg-purple-50 rounded-full opacity-60"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pendaftaran Lomba</span>
+                <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                </div>
+            </div>
+            <p class="text-2xl sm:text-3xl font-extrabold text-slate-800">{{ $stats['total_pendaftaran'] }}</p>
+            <p class="text-xs text-slate-500 mt-1 font-medium">Entri lomba diikuti</p>
+        </div>
+
+        {{-- Card 4: Event Aktif --}}
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div class="absolute -right-4 -bottom-4 w-20 h-20 bg-amber-50 rounded-full opacity-60"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Event Aktif</span>
+                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+            </div>
+            <p class="text-2xl sm:text-3xl font-extrabold text-slate-800">{{ $stats['total_event_aktif'] }}</p>
+            <p class="text-xs text-slate-500 mt-1 font-medium">Kejuaraan dibuka</p>
+        </div>
+    </div>
+
+    {{-- Tabs Navigation --}}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+        <div class="border-b border-slate-200 bg-slate-50/70 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+            {{-- Tab Buttons --}}
+            <nav class="flex space-x-2 sm:space-x-4" aria-label="Tabs">
+                <button type="button"
+                        id="tab-btn-master"
+                        onclick="switchTab('master')"
+                        class="tab-btn px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all bg-indigo-600 text-white shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>Data Atlet Perkumpulan</span>
+                    <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-white/20 text-white font-semibold">
+                        {{ $stats['total_master_atlet'] }}
+                    </span>
+                </button>
+
+                <button type="button"
+                        id="tab-btn-pendaftaran"
+                        onclick="switchTab('pendaftaran')"
+                        class="tab-btn px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    <span>Pendaftaran di Event</span>
+                    <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-700 font-semibold">
+                        {{ $stats['total_pendaftaran'] }}
+                    </span>
+                </button>
+
+                <button type="button"
+                        id="tab-btn-event"
+                        onclick="switchTab('event')"
+                        class="tab-btn px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>Event Aktif</span>
+                    <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-slate-200 text-slate-700 font-semibold">
+                        {{ $stats['total_event_aktif'] }}
+                    </span>
+                </button>
+            </nav>
+        </div>
+
+        {{-- TAB 1: MASTER DATA ATLET PERKUMPULAN --}}
+        <div id="tab-content-master" class="tab-pane p-5 sm:p-6">
+            {{-- Top Toolbar --}}
+            <div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <span>Daftar Atlet Terdaftar pada Perkumpulan</span>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            {{ $masterAtletGrouped->count() }} Atlet
+                        </span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Data atlet dan riwayat waktu perkumpulan yang siap digunakan otomatis saat pendaftaran event kejuaraan.
+                    </p>
+                </div>
+
+                {{-- Search Bar --}}
+                <form action="{{ route('perkumpulan.rekap') }}" method="GET" class="flex items-center gap-2">
+                    <input type="hidden" name="tab" value="master">
+                    <div class="relative w-full sm:w-64">
+                        <input type="text"
+                               name="search_atlet"
+                               value="{{ request('search_atlet') }}"
+                               placeholder="Cari nama atlet..."
+                               class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    @if(request('search_atlet'))
+                        <a href="{{ route('perkumpulan.rekap', ['tab' => 'master']) }}" class="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                            Reset
+                        </a>
+                    @endif
+                    <button type="submit" class="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+                        Cari
+                    </button>
+                </form>
+            </div>
+
+            {{-- Master Atlet Table --}}
+            @if($masterAtletGrouped->count() > 0)
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-12">No</th>
+                                <th class="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nama Atlet</th>
+                                <th class="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Gender</th>
+                                <th class="px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tgl Lahir & Usia</th>
+                                <th class="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Estimasi KU</th>
+                                <th class="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nomor & Limit Waktu</th>
+                                <th class="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100">
+                            @foreach($masterAtletGrouped as $index => $atlet)
+                                @php
+                                    $tglLahir = $atlet->tanggal_lahir;
+                                    $usia = $tglLahir ? \Carbon\Carbon::parse($tglLahir)->age : null;
+                                    $kuLabel = '-';
+                                    $kuBadge = 'bg-slate-100 text-slate-700 border-slate-200';
+                                    if ($usia !== null) {
+                                        if ($usia <= 8) {
+                                            $kuLabel = 'KU 5 (≤ 8 th)';
+                                            $kuBadge = 'bg-teal-50 text-teal-700 border-teal-200';
+                                        } elseif ($usia <= 10) {
+                                            $kuLabel = 'KU 4 (9-10 th)';
+                                            $kuBadge = 'bg-cyan-50 text-cyan-700 border-cyan-200';
+                                        } elseif ($usia <= 12) {
+                                            $kuLabel = 'KU 3 (11-12 th)';
+                                            $kuBadge = 'bg-blue-50 text-blue-700 border-blue-200';
+                                        } elseif ($usia <= 14) {
+                                            $kuLabel = 'KU 2 (13-14 th)';
+                                            $kuBadge = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                                        } elseif ($usia <= 18) {
+                                            $kuLabel = 'KU 1 (15-18 th)';
+                                            $kuBadge = 'bg-purple-50 text-purple-700 border-purple-200';
+                                        } else {
+                                            $kuLabel = 'Senior (19+ th)';
+                                            $kuBadge = 'bg-amber-50 text-amber-700 border-amber-200';
+                                        }
+                                    }
+                                @endphp
+                                <tr class="hover:bg-indigo-50/30 transition-colors">
+                                    {{-- No --}}
+                                    <td class="px-4 py-4 text-center text-xs text-slate-400 font-semibold">
+                                        {{ $index + 1 }}
+                                    </td>
+
+                                    {{-- Nama Atlet --}}
+                                    <td class="px-5 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 rounded-xl {{ $atlet->jenis_kelamin === 'putri' ? 'bg-pink-100 text-pink-700' : 'bg-indigo-100 text-indigo-700' }} flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                                                {{ strtoupper(substr($atlet->nama_atlet, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-bold text-slate-800 leading-snug">
+                                                    {{ $atlet->nama_atlet }}
+                                                </div>
+                                                <div class="text-xs text-slate-400 mt-0.5">
+                                                    {{ $atlet->total_nomor }} nomor lomba tersimpan
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    {{-- Gender --}}
+                                    <td class="px-4 py-4 whitespace-nowrap text-center">
+                                        @if($atlet->jenis_kelamin === 'putra')
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                                <svg class="w-3.5 h-3.5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                Putra
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                                <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                Putri
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Tanggal Lahir & Usia --}}
+                                    <td class="px-4 py-4 whitespace-nowrap text-xs">
+                                        @if($tglLahir)
+                                            <span class="font-semibold text-slate-700">{{ $tglLahir->format('d M Y') }}</span>
+                                            <span class="text-slate-400 block mt-0.5">({{ $usia }} tahun)</span>
+                                        @else
+                                            <span class="text-slate-400 italic">Belum diisi</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Estimasi KU --}}
+                                    <td class="px-4 py-4 whitespace-nowrap text-center">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border {{ $kuBadge }}">
+                                            {{ $kuLabel }}
+                                        </span>
+                                    </td>
+
+                                    {{-- Nomor & Limit Waktu Preview --}}
+                                    <td class="px-5 py-4">
+                                        <div class="flex flex-wrap gap-1.5 max-w-md">
+                                            @foreach($atlet->riwayat->take(3) as $rw)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-700 border border-slate-200">
+                                                    <span class="font-medium">{{ $rw->jarak }}m {{ ucfirst($rw->gaya) }}:</span>
+                                                    <span class="font-mono font-bold text-indigo-600">{{ $rw->limit_waktu }}</span>
+                                                </span>
+                                            @endforeach
+                                            @if($atlet->riwayat->count() > 3)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                    +{{ $atlet->riwayat->count() - 3 }} lainnya
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </td>
+
+                                    {{-- Aksi --}}
+                                    <td class="px-4 py-4 whitespace-nowrap text-center">
+                                        <button type="button"
+                                                onclick='openRiwayatModal(@json($atlet->nama_atlet), @json($atlet->riwayat))'
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-200 shadow-sm">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            Detail Waktu
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+                    <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-500">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <h4 class="text-base font-bold text-slate-800 mb-1">Belum Ada Data Atlet Terdaftar</h4>
+                    <p class="text-sm text-slate-500 max-w-md mx-auto mb-4">
+                        Data atlet perkumpulan dapat di-import melalui file Excel oleh Administrator atau akan tersimpan saat atlet didaftarkan ke event kejuaraan.
+                    </p>
+                    <a href="{{ route('perkumpulan.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Daftarkan Atlet ke Event
+                    </a>
+                </div>
+            @endif
+        </div>
+
+        {{-- TAB 2: PENDAFTARAN ATLET DI EVENT --}}
+        <div id="tab-content-pendaftaran" class="tab-pane p-5 sm:p-6 hidden">
+            {{-- Toolbar Filters --}}
+            <div class="mb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <span>Pendaftaran Atlet di Kejuaraan</span>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                            {{ $myPendaftaran->total() }} Entri
+                        </span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Daftar atlet yang sedang diikutsertakan dalam berbagai event kejuaraan renang.
+                    </p>
+                </div>
+
+                <form action="{{ route('perkumpulan.rekap') }}" method="GET" class="flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="tab" value="pendaftaran">
+
+                    {{-- Filter Event --}}
+                    <select name="event_id" onchange="this.form.submit()" class="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Semua Event Kejuaraan</option>
+                        @foreach($events as $ev)
+                            <option value="{{ $ev->id }}" {{ request('event_id') == $ev->id ? 'selected' : '' }}>
+                                {{ $ev->nama_event }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    {{-- Search Nama --}}
+                    <div class="relative w-44 sm:w-56">
+                        <input type="text"
+                               name="search_pendaftaran"
+                               value="{{ request('search_pendaftaran') }}"
+                               placeholder="Cari atlet..."
+                               class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
 
-                    {{-- Right Side: Stats + Arrow --}}
-                    <div class="flex items-center gap-4 shrink-0">
-                        <div class="text-center px-3">
-                            <p class="text-lg font-bold {{ $atletCount > 0 ? 'text-indigo-600' : 'text-slate-400' }}">{{ $atletCount }}</p>
-                            <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Atlet</p>
-                        </div>
-                        <div class="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center transition-colors">
-                            <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    @if(request('event_id') || request('search_pendaftaran'))
+                        <a href="{{ route('perkumpulan.rekap', ['tab' => 'pendaftaran']) }}" class="px-2.5 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                            Reset
+                        </a>
+                    @endif
+                    <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors">
+                        Filter
+                    </button>
+                </form>
+            </div>
+
+            {{-- Pendaftaran Table --}}
+            @if($myPendaftaran->count() > 0)
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Atlet</th>
+                                <th class="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Event Kejuaraan</th>
+                                <th class="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">KU & Nomor Lomba</th>
+                                <th class="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Limit Waktu</th>
+                                <th class="px-4 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100">
+                            @foreach($myPendaftaran as $daftar)
+                                <tr class="hover:bg-purple-50/30 transition-colors">
+                                    {{-- Atlet --}}
+                                    <td class="px-5 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-bold text-slate-800">{{ $daftar->nama_atlet }}</div>
+                                        <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                            <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold {{ $daftar->jenis_kelamin === 'putra' ? 'bg-sky-50 text-sky-700' : 'bg-rose-50 text-rose-700' }}">
+                                                {{ ucfirst($daftar->jenis_kelamin) }}
+                                            </span>
+                                            <span>Lahir: {{ $daftar->tanggal_lahir?->format('d/m/Y') }}</span>
+                                        </div>
+                                    </td>
+
+                                    {{-- Event --}}
+                                    <td class="px-5 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-semibold text-slate-800">{{ $daftar->event->nama_event ?? '-' }}</div>
+                                        <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                                            {{ $daftar->event->lokasi ?? '-' }}
+                                        </div>
+                                    </td>
+
+                                    {{-- KU & Nomor --}}
+                                    <td class="px-5 py-4 whitespace-nowrap">
+                                        <div class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 inline-block mb-1">
+                                            {{ $daftar->kelompokUmur->nama_ku ?? '-' }}
+                                        </div>
+                                        <div class="text-sm font-medium text-slate-700">
+                                            {{ $daftar->nomorLomba->nama_nomor ?? '-' }}
+                                        </div>
+                                    </td>
+
+                                    {{-- Waktu --}}
+                                    <td class="px-4 py-4 whitespace-nowrap text-center">
+                                        @if($daftar->status_waktu === 'NT')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                NT
+                                            </span>
+                                        @else
+                                            <span class="text-xs font-mono font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                                                {{ $daftar->limit_waktu }}
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Status --}}
+                                    <td class="px-4 py-4 whitespace-nowrap text-center">
+                                        @if($daftar->isLocked())
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200" title="Terkunci (Melewati Deadline)">
+                                                <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                                Terkunci
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                                                Aktif
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Aksi --}}
+                                    <td class="px-4 py-4 whitespace-nowrap text-right text-xs font-medium">
+                                        <div class="flex items-center justify-end space-x-2">
+                                            @if(!$daftar->isLocked())
+                                                <a href="{{ route('perkumpulan.pendaftaran.edit', $daftar) }}"
+                                                   class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors"
+                                                   title="Edit Data Pendaftaran">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                </a>
+                                                <form action="{{ route('perkumpulan.pendaftaran.destroy', $daftar) }}"
+                                                      method="POST"
+                                                      class="inline-block"
+                                                      onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pendaftaran {{ $daftar->nama_atlet }} pada nomor ini?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                            class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Batalkan Pendaftaran">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="text-slate-400 text-xs italic">Terkunci</span>
+                                            @endif
+                                            @if($daftar->event_id)
+                                                <a href="{{ route('perkumpulan.event.dashboard', $daftar->event_id) }}"
+                                                   class="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                   title="Ke Dashboard Event">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                @if($myPendaftaran->hasPages())
+                    <div class="mt-4">
+                        {{ $myPendaftaran->links() }}
+                    </div>
+                @endif
+            @else
+                <div class="bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+                    <div class="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-purple-500">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </div>
+                    <h4 class="text-base font-bold text-slate-800 mb-1">Belum Ada Pendaftaran Event</h4>
+                    <p class="text-sm text-slate-500 max-w-md mx-auto mb-4">
+                        Perkumpulan Anda belum mendaftarkan atlet ke event kejuaraan renang yang aktif saat ini.
+                    </p>
+                    <a href="{{ route('perkumpulan.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Pilih Event Kejuaraan
+                    </a>
+                </div>
+            @endif
+        </div>
+
+        {{-- TAB 3: EVENT AKTIF --}}
+        <div id="tab-content-event" class="tab-pane p-5 sm:p-6 hidden">
+            <div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <span>Event Kejuaraan Renang Aktif</span>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            {{ $events->count() }} Event
+                        </span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Pilih event untuk mengelola pendaftaran atlet dan nomor lomba yang diikuti.
+                    </p>
+                </div>
+            </div>
+
+            @forelse($events as $event)
+                @php
+                    $isDeadlinePassed = $event->isDeadlinePassed();
+                    $atletCount = $event->pendaftaran->where('user_id', auth()->id())->count();
+                @endphp
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-md hover:border-indigo-200 transition-all duration-200 mb-4">
+                    <div class="flex flex-col sm:flex-row">
+                        <div class="sm:w-2.5 {{ $isDeadlinePassed ? 'bg-slate-300' : 'bg-gradient-to-b from-indigo-500 to-indigo-600' }} shrink-0"></div>
+                        <div class="flex-1 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <h4 class="font-bold text-slate-800 text-base hover:text-indigo-600 transition-colors">
+                                        {{ $event->nama_event }}
+                                    </h4>
+                                    @if($isDeadlinePassed)
+                                        <span class="shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">Ditutup</span>
+                                    @else
+                                        <span class="shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                            Dibuka
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                                        {{ $event->lokasi }}
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        {{ $event->tanggal_mulai->format('d M Y') }} – {{ $event->tanggal_selesai->format('d M Y') }}
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Deadline:
+                                        <span class="font-semibold {{ $isDeadlinePassed ? 'text-red-500' : 'text-slate-700' }}">
+                                            {{ $event->deadline_pendaftaran->format('d M Y, H:i') }}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4 shrink-0">
+                                <div class="text-center px-3 border-r border-slate-200 sm:border-r-0">
+                                    <p class="text-xl font-black {{ $atletCount > 0 ? 'text-indigo-600' : 'text-slate-400' }}">{{ $atletCount }}</p>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Atlet Terdaftar</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    @if(!$isDeadlinePassed)
+                                        <a href="{{ route('perkumpulan.pendaftaran.create', $event) }}"
+                                           class="px-3.5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm inline-flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                            Daftar Atlet
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('perkumpulan.event.dashboard', $event) }}"
+                                       class="px-3.5 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors border border-indigo-200 inline-flex items-center gap-1">
+                                        Kelola Event
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </a>
-    @empty
-        <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-            <div class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            </div>
-            <p class="text-sm font-medium text-slate-600">Belum ada event aktif saat ini.</p>
+            @empty
+                <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+                    <div class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <p class="text-sm font-medium text-slate-600">Belum ada event aktif saat ini.</p>
+                </div>
+            @endforelse
         </div>
-    @endforelse
+    </div>
 </div>
+
+{{-- Modal Detail Riwayat Waktu Atlet --}}
+<div id="modal-riwayat" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden animate-fadeIn">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+        <div class="px-6 py-4 bg-gradient-to-r from-indigo-700 to-indigo-800 text-white flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-white shadow-inner">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white leading-tight" id="modal-atlet-nama">Nama Atlet</h3>
+                    <p class="text-xs text-indigo-200">Riwayat Catatan Limit Waktu Perkumpulan</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeRiwayatModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="p-6 max-h-[70vh] overflow-y-auto">
+            <div class="overflow-hidden rounded-xl border border-slate-200">
+                <table class="min-w-full divide-y divide-slate-200 text-xs">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-bold text-slate-500 uppercase">Jarak & Gaya</th>
+                            <th class="px-4 py-3 text-center font-bold text-slate-500 uppercase">Limit Waktu</th>
+                            <th class="px-4 py-3 text-right font-bold text-slate-500 uppercase">Diperbarui</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-riwayat-body" class="bg-white divide-y divide-slate-100">
+                        {{-- Injected via JS --}}
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3 text-center">
+                Waktu ini otomatis dijadikan acuan saat mendaftarkan atlet pada kejuaraan renang.
+            </p>
+        </div>
+
+        <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button type="button" onclick="closeRiwayatModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    // Tab switching logic
+    function switchTab(tab) {
+        // Hide all panes
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+
+        // Reset all buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+            btn.classList.add('text-slate-600', 'hover:text-slate-900', 'hover:bg-slate-100');
+            const badge = btn.querySelector('span:last-child');
+            if (badge) {
+                badge.classList.remove('bg-white/20', 'text-white');
+                badge.classList.add('bg-slate-200', 'text-slate-700');
+            }
+        });
+
+        // Activate selected tab
+        const activePane = document.getElementById('tab-content-' + tab);
+        const activeBtn = document.getElementById('tab-btn-' + tab);
+
+        if (activePane && activeBtn) {
+            activePane.classList.remove('hidden');
+            activeBtn.classList.remove('text-slate-600', 'hover:text-slate-900', 'hover:bg-slate-100');
+            activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+            const badge = activeBtn.querySelector('span:last-child');
+            if (badge) {
+                badge.classList.remove('bg-slate-200', 'text-slate-700');
+                badge.classList.add('bg-white/20', 'text-white');
+            }
+        }
+
+        // Update URL hash without scroll
+        history.replaceState(null, null, '#tab=' + tab);
+    }
+
+    // Modal Riwayat
+    function openRiwayatModal(namaAtlet, riwayatData) {
+        document.getElementById('modal-atlet-nama').innerText = namaAtlet;
+        const tbody = document.getElementById('modal-riwayat-body');
+        tbody.innerHTML = '';
+
+        if (!riwayatData || riwayatData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-6 text-center text-slate-400 italic">Belum ada catatan limit waktu.</td></tr>';
+        } else {
+            riwayatData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+
+                const gayaCapitalized = item.gaya.charAt(0).toUpperCase() + item.gaya.slice(1);
+                const updatedDate = item.updated_at ? new Date(item.updated_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-800">
+                        <span class="inline-block px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold mr-1.5">${item.jarak}m</span>
+                        ${gayaCapitalized}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        <span class="font-mono font-bold text-indigo-600 bg-indigo-50/50 px-2 py-0.5 rounded border border-indigo-100 text-xs">
+                            ${item.limit_waktu}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-right text-slate-400">
+                        ${updatedDate}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('modal-riwayat').classList.remove('hidden');
+    }
+
+    function closeRiwayatModal() {
+        document.getElementById('modal-riwayat').classList.add('hidden');
+    }
+
+    // Check URL query or hash on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlTab = urlParams.get('tab');
+        const hash = window.location.hash;
+
+        if (urlTab) {
+            switchTab(urlTab);
+        } else if (hash && hash.startsWith('#tab=')) {
+            const tabName = hash.replace('#tab=', '');
+            switchTab(tabName);
+        }
+    });
+</script>
+@endpush
 @endsection

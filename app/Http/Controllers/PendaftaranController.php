@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\KelompokUmur;
 use App\Models\Pendaftaran;
+use App\Models\MasterRiwayatAtlet;
 use App\Http\Requests\StorePendaftaranRequest;
 use App\Http\Requests\UpdatePendaftaranRequest;
 use App\Services\AutoMatchService;
@@ -27,18 +28,74 @@ class PendaftaranController extends Controller
         $events = Event::aktif()->with(['kelompokUmur', 'pendaftaran'])->get();
 
         $totalPendaftaran = Pendaftaran::where('user_id', Auth::id())->count();
+        $totalMasterAtlet = MasterRiwayatAtlet::where('user_id', Auth::id())->distinct('nama_atlet')->count('nama_atlet');
 
-        return view('perkumpulan.events', compact('events', 'totalPendaftaran'));
+        return view('perkumpulan.events', compact('events', 'totalPendaftaran', 'totalMasterAtlet'));
     }
 
     /**
-     * Rekap semua pendaftaran — menampilkan event aktif dengan jumlah atlet.
+     * Rekap semua pendaftaran & data atlet perkumpulan — menampilkan atlet terdaftar pada perkumpulan.
      */
-    public function rekap()
+    public function rekap(Request $request)
     {
+        $userId = Auth::id();
+
+        // 1. Data Event Aktif
         $events = Event::aktif()->with(['kelompokUmur', 'pendaftaran'])->get();
 
-        return view('perkumpulan.dashboard', compact('events'));
+        // 2. Data Master Riwayat Atlet milik perkumpulan (Database Atlet Perkumpulan)
+        $masterQuery = MasterRiwayatAtlet::where('user_id', $userId);
+
+        if ($request->filled('search_atlet')) {
+            $search = $request->string('search_atlet')->trim()->value();
+            $masterQuery->where('nama_atlet', 'like', "%{$search}%");
+        }
+
+        $allMaster = $masterQuery->orderBy('nama_atlet')->orderBy('jarak')->orderBy('gaya')->get();
+
+        // Kelompokkan per nama atlet
+        $masterAtletGrouped = $allMaster->groupBy('nama_atlet')->map(function ($items, $nama) {
+            $first = $items->first();
+            return (object) [
+                'nama_atlet'    => $nama,
+                'tanggal_lahir' => $first->tanggal_lahir,
+                'jenis_kelamin' => $first->jenis_kelamin,
+                'total_nomor'   => $items->count(),
+                'riwayat'       => $items,
+            ];
+        })->values();
+
+        // 3. Data Pendaftaran Atlet di Event Kejuaraan
+        $pendaftaranQuery = Pendaftaran::where('user_id', $userId)
+            ->with(['event', 'nomorLomba', 'kelompokUmur'])
+            ->latest();
+
+        if ($request->filled('event_id')) {
+            $pendaftaranQuery->where('event_id', $request->integer('event_id'));
+        }
+
+        if ($request->filled('search_pendaftaran')) {
+            $searchPendaftaran = $request->string('search_pendaftaran')->trim()->value();
+            $pendaftaranQuery->where('nama_atlet', 'like', "%{$searchPendaftaran}%");
+        }
+
+        $myPendaftaran = $pendaftaranQuery->paginate(15, ['*'], 'pendaftaran_page')->withQueryString();
+
+        // 4. Statistik Ringkasan
+        $stats = [
+            'total_master_atlet'   => $masterAtletGrouped->count(),
+            'total_riwayat_waktu'  => $allMaster->count(),
+            'total_pendaftaran'    => Pendaftaran::where('user_id', $userId)->count(),
+            'total_event_diikuti'  => Pendaftaran::where('user_id', $userId)->distinct('event_id')->count('event_id'),
+            'total_event_aktif'    => $events->count(),
+        ];
+
+        return view('perkumpulan.dashboard', compact(
+            'events',
+            'myPendaftaran',
+            'masterAtletGrouped',
+            'stats'
+        ));
     }
 
     /**
@@ -141,7 +198,9 @@ class PendaftaranController extends Controller
      */
     public function edit(Pendaftaran $pendaftaran)
     {
-        $this->authorize('update', $pendaftaran);
+        if ($pendaftaran->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk data pendaftaran ini.');
+        }
 
         if ($pendaftaran->isLocked()) {
             return back()->with('error', 'Data sudah terkunci karena deadline telah berakhir.');
@@ -158,7 +217,9 @@ class PendaftaranController extends Controller
      */
     public function update(UpdatePendaftaranRequest $request, Pendaftaran $pendaftaran)
     {
-        $this->authorize('update', $pendaftaran);
+        if ($pendaftaran->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk data pendaftaran ini.');
+        }
 
         if ($pendaftaran->isLocked()) {
             return back()->with('error', 'Data sudah terkunci. Tidak bisa diubah.');
@@ -175,7 +236,9 @@ class PendaftaranController extends Controller
      */
     public function destroy(Pendaftaran $pendaftaran)
     {
-        $this->authorize('delete', $pendaftaran);
+        if ($pendaftaran->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk data pendaftaran ini.');
+        }
 
         if ($pendaftaran->isLocked()) {
             return back()->with('error', 'Data sudah terkunci. Tidak bisa dihapus.');
@@ -185,7 +248,6 @@ class PendaftaranController extends Controller
         $eventId   = $pendaftaran->event_id;
         $pendaftaran->delete();
 
-        return redirect()->route('perkumpulan.event.dashboard', $eventId)
-            ->with('success', "Data pendaftaran {$namaAtlet} berhasil dihapus.");
+        return back()->with('success', "Data pendaftaran {$namaAtlet} berhasil dibatalkan.");
     }
 }
