@@ -20,18 +20,44 @@ class PendaftaranController extends Controller
     ) {}
 
     /**
-     * Dashboard perkumpulan — daftar event & entri atlet milik klub.
+     * Daftar event aktif yang bisa diikuti perkumpulan.
      */
     public function dashboard()
     {
-        $events = Event::aktif()->with('kelompokUmur')->get();
+        $events = Event::aktif()->with(['kelompokUmur', 'pendaftaran'])->get();
+
+        $totalPendaftaran = Pendaftaran::where('user_id', Auth::id())->count();
+
+        return view('perkumpulan.events', compact('events', 'totalPendaftaran'));
+    }
+
+    /**
+     * Rekap semua pendaftaran — menampilkan event aktif dengan jumlah atlet.
+     */
+    public function rekap()
+    {
+        $events = Event::aktif()->with(['kelompokUmur', 'pendaftaran'])->get();
+
+        return view('perkumpulan.dashboard', compact('events'));
+    }
+
+    /**
+     * Dashboard per-event — menampilkan data pendaftaran atlet milik klub untuk event tertentu.
+     */
+    public function eventPendaftaran(Event $event)
+    {
+        $event->load('kelompokUmur');
 
         $myPendaftaran = Pendaftaran::where('user_id', Auth::id())
-            ->with(['event', 'nomorLomba', 'kelompokUmur'])
+            ->where('event_id', $event->id)
+            ->with(['nomorLomba', 'kelompokUmur'])
             ->latest()
             ->paginate(20);
 
-        return view('perkumpulan.dashboard', compact('events', 'myPendaftaran'));
+        $isDeadlinePassed = $this->deadline->isDeadlinePassed($event);
+        $sisaWaktu        = $this->deadline->sisaWaktu($event);
+
+        return view('perkumpulan.halaman-utama', compact('event', 'myPendaftaran', 'isDeadlinePassed', 'sisaWaktu'));
     }
 
     /**
@@ -107,7 +133,7 @@ class PendaftaranController extends Controller
         $listNomor  = implode(', ', $daftarNomor);
         $successMsg = "Atlet {$namaAtlet} berhasil didaftarkan ke {$jumlah} nomor lomba: {$listNomor}.";
 
-        return redirect()->route('perkumpulan.dashboard')->with('success', $successMsg);
+        return redirect()->route('perkumpulan.event.dashboard', $event)->with('success', $successMsg);
     }
 
     /**
@@ -140,7 +166,7 @@ class PendaftaranController extends Controller
 
         $pendaftaran->update($request->validated());
 
-        return redirect()->route('perkumpulan.dashboard')
+        return redirect()->route('perkumpulan.event.dashboard', $pendaftaran->event_id)
             ->with('success', 'Data pendaftaran berhasil diperbarui.');
     }
 
@@ -156,9 +182,10 @@ class PendaftaranController extends Controller
         }
 
         $namaAtlet = $pendaftaran->nama_atlet;
+        $eventId   = $pendaftaran->event_id;
         $pendaftaran->delete();
 
-        return redirect()->route('perkumpulan.dashboard')
+        return redirect()->route('perkumpulan.event.dashboard', $eventId)
             ->with('success', "Data pendaftaran {$namaAtlet} berhasil dihapus.");
     }
 }

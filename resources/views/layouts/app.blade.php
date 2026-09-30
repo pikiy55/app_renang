@@ -29,7 +29,7 @@
                         @if(auth()->user()->role === 'admin')
                             <a href="{{ route('admin.events.index') }}" class="text-slate-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Admin Area</a>
                         @else
-                            <a href="{{ route('perkumpulan.dashboard') }}" class="text-slate-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Dashboard</a>
+                            <a href="{{ route('perkumpulan.dashboard') }}" class="text-slate-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Daftar Event</a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}" class="ml-4">
                             @csrf

@@ -35,8 +35,14 @@ Route::post('/logout', [AuthController::class, 'logout'])
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'perkumpulan'])->prefix('perkumpulan')->name('perkumpulan.')->group(function () {
-    // Dashboard
+    // Daftar Event (halaman utama perkumpulan)
     Route::get('/', [PendaftaranController::class, 'dashboard'])->name('dashboard');
+
+    // Rekap semua pendaftaran (dashboard lama)
+    Route::get('/rekap', [PendaftaranController::class, 'rekap'])->name('rekap');
+
+    // Dashboard per Event (halaman pisah)
+    Route::get('/events/{event}', [PendaftaranController::class, 'eventPendaftaran'])->name('event.dashboard');
 
     // Rekap pendaftaran per event
     Route::get('/events/{event}/pendaftaran', [PendaftaranController::class, 'eventPendaftaran'])->name('pendaftaran.index');
