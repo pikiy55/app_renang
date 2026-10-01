@@ -3,6 +3,7 @@
 @section('title', $event->nama_event . ' - Dashboard Perkumpulan')
 
 @section('content')
+@php use Illuminate\Support\Facades\Storage; @endphp
 <div class="min-h-screen bg-slate-50">
     {{-- Event Header --}}
     <div class="relative bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-900 overflow-hidden">
@@ -62,6 +63,16 @@
                         <p class="text-xl font-extrabold text-white">{{ $sisaWaktu }}</p>
                         <p class="text-[11px] text-indigo-200/70 font-medium">Sisa Waktu</p>
                     </div>
+
+                    @if($event->file_juknis)
+                        <a href="{{ route('perkumpulan.event.juknis.download', $event) }}"
+                           class="inline-flex items-center justify-center px-4 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/30 text-white font-semibold text-sm hover:bg-white/20 hover:-translate-y-0.5 transition-all duration-200">
+                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Unduh Juknis
+                        </a>
+                    @endif
 
                     @if(!$isDeadlinePassed)
                         <a href="{{ route('perkumpulan.pendaftaran.create', $event) }}"

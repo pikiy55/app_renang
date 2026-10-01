@@ -15,6 +15,7 @@ class Event extends Model
         'tanggal_selesai',
         'deadline_pendaftaran',
         'is_active',
+        'file_juknis',
     ];
 
     protected function casts(): array

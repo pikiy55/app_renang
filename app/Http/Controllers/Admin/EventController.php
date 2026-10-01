@@ -9,6 +9,7 @@ use App\Models\KelompokUmur;
 use App\Models\NomorLomba;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
@@ -26,11 +27,18 @@ class EventController extends Controller
     public function store(StoreEventRequest $request)
     {
         DB::transaction(function () use ($request) {
-            $event = Event::create($request->safe()->only([
+            $data = $request->safe()->only([
                 'nama_event', 'lokasi', 'tanggal_mulai',
                 'tanggal_selesai', 'deadline_pendaftaran', 'is_active',
-            ]));
+            ]);
 
+            // Upload file juknis jika ada
+            if ($request->hasFile('file_juknis')) {
+                $data['file_juknis'] = $request->file('file_juknis')
+                    ->store('juknis', 'public');
+            }
+
+            $event = Event::create($data);
             $this->syncKelompokUmur($event, $request->input('ku', []));
         });
 
@@ -60,11 +68,27 @@ class EventController extends Controller
     public function update(StoreEventRequest $request, Event $event)
     {
         DB::transaction(function () use ($request, $event) {
-            $event->update($request->safe()->only([
+            $data = $request->safe()->only([
                 'nama_event', 'lokasi', 'tanggal_mulai',
                 'tanggal_selesai', 'deadline_pendaftaran', 'is_active',
-            ]));
+            ]);
 
+            // Upload file juknis baru jika ada, hapus yang lama
+            if ($request->hasFile('file_juknis')) {
+                if ($event->file_juknis) {
+                    Storage::disk('public')->delete($event->file_juknis);
+                }
+                $data['file_juknis'] = $request->file('file_juknis')
+                    ->store('juknis', 'public');
+            }
+
+            // Hapus file juknis jika admin mencentang hapus
+            if ($request->boolean('hapus_juknis') && $event->file_juknis) {
+                Storage::disk('public')->delete($event->file_juknis);
+                $data['file_juknis'] = null;
+            }
+
+            $event->update($data);
             $this->syncKelompokUmur($event, $request->input('ku', []));
         });
 
@@ -73,8 +97,24 @@ class EventController extends Controller
 
     public function destroy(Event $event)
     {
+        // Hapus file juknis dari storage jika ada
+        if ($event->file_juknis) {
+            Storage::disk('public')->delete($event->file_juknis);
+        }
         $event->delete();
         return redirect()->route('admin.events.index')->with('success', 'Event berhasil dihapus.');
+    }
+
+    public function downloadJuknis(Event $event)
+    {
+        if (!$event->file_juknis || !Storage::disk('public')->exists($event->file_juknis)) {
+            abort(404, 'File juknis tidak ditemukan.');
+        }
+
+        $ext      = pathinfo($event->file_juknis, PATHINFO_EXTENSION);
+        $filename = 'Juknis_' . str_replace(' ', '_', $event->nama_event) . '.' . $ext;
+
+        return Storage::disk('public')->download($event->file_juknis, $filename);
     }
 
     // ─── Private Helpers ─────────────────────────────────────────────

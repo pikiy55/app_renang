@@ -12,7 +12,7 @@
     </a>
 </div>
 
-<form action="{{ route('admin.events.store') }}" method="POST" id="eventForm">
+<form action="{{ route('admin.events.store') }}" method="POST" id="eventForm" enctype="multipart/form-data">
     @csrf
 
     {{-- ═══════════════════════════════════════════ --}}
@@ -102,13 +102,50 @@
     </div>
 
     {{-- ═══════════════════════════════════════════ --}}
-    {{-- SECTION 2: Kelompok Umur & Nomor Lomba --}}
+    {{-- SECTION 2: Upload Juknis --}}
+    {{-- ═══════════════════════════════════════════ --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden max-w-5xl mb-8">
+        <div class="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-amber-50 to-slate-50">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">2</div>
+                <div class="ml-3">
+                    <h3 class="text-base font-bold text-slate-800">File Juknis</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Upload file Petunjuk Teknis (PDF/DOC) yang dapat didownload oleh klub <span class="text-amber-600 font-medium">(opsional)</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="p-8">
+            <div class="space-y-4">
+                <div>
+                    <label for="file_juknis" class="block text-sm font-bold text-slate-700 mb-1">Upload File Juknis</label>
+                    <div id="juknis-dropzone"
+                        class="mt-1 flex flex-col items-center justify-center px-6 pt-8 pb-8 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition-all group"
+                        onclick="document.getElementById('file_juknis').click()">
+                        <div id="juknis-preview-icon">
+                            <svg class="w-12 h-12 text-slate-300 group-hover:text-amber-400 transition-colors mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-600 group-hover:text-amber-600 transition-colors" id="juknis-filename">Klik untuk pilih file atau drag & drop</p>
+                        <p class="text-xs text-slate-400 mt-1">PDF, DOC, DOCX — Maks. 10 MB</p>
+                        <input type="file" name="file_juknis" id="file_juknis" class="hidden" accept=".pdf,.doc,.docx">
+                    </div>
+                    @error('file_juknis')
+                        <p class="mt-1.5 text-sm text-red-600 font-medium">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ═══════════════════════════════════════════ --}}
+    {{-- SECTION 3: Kelompok Umur & Nomor Lomba --}}
     {{-- ═══════════════════════════════════════════ --}}
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden max-w-5xl mb-8">
         <div class="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-cyan-50 to-slate-50">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">2</div>
+                    <div class="flex-shrink-0 w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">3</div>
                     <div class="ml-3">
                         <h3 class="text-base font-bold text-slate-800">Kelompok Umur & Nomor Lomba</h3>
                         <p class="text-xs text-slate-500 mt-0.5">Atur kategori umur, gaya renang, dan jarak lomba <span class="text-amber-600 font-medium">(opsional — bisa ditambah nanti)</span></p>
@@ -151,6 +188,38 @@
 
 @push('scripts')
 <script>
+    // Preview nama file juknis saat dipilih
+    document.getElementById('file_juknis').addEventListener('change', function() {
+        const filename = this.files[0]?.name ?? 'Klik untuk pilih file atau drag & drop';
+        const ext = (this.files[0]?.name ?? '').split('.').pop().toLowerCase();
+        const el = document.getElementById('juknis-filename');
+        el.textContent = filename;
+        el.classList.toggle('text-amber-600', !!this.files[0]);
+        // Ganti ikon sesuai tipe file
+        const iconEl = document.getElementById('juknis-preview-icon');
+        if (this.files[0]) {
+            iconEl.innerHTML = `<div class="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
+                <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>`;
+        }
+    });
+
+    // Drag & drop support
+    const dropzone = document.getElementById('juknis-dropzone');
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('border-amber-400', 'bg-amber-50'); });
+    dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('border-amber-400', 'bg-amber-50'); });
+    dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.classList.remove('border-amber-400', 'bg-amber-50');
+        const input = document.getElementById('file_juknis');
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            input.dispatchEvent(new Event('change'));
+        }
+    });
+
     let kuIndex = 0;
     const gayaOptions = [
         { value: 'bebas', label: 'Bebas' },

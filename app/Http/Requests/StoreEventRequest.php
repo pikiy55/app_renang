@@ -20,6 +20,7 @@ class StoreEventRequest extends FormRequest
             'tanggal_selesai'      => ['required', 'date', 'after_or_equal:tanggal_mulai'],
             'deadline_pendaftaran' => ['required', 'date', 'before_or_equal:tanggal_mulai'],
             'is_active'            => ['boolean'],
+            'file_juknis'          => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:10240'],
 
             // Kelompok Umur (opsional, array)
             'ku'                          => ['nullable', 'array'],

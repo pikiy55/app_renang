@@ -57,6 +57,9 @@ Route::middleware(['auth', 'perkumpulan'])->prefix('perkumpulan')->name('perkump
     // Auto-complete & auto-match (AJAX)
     Route::get('/autocomplete/atlet', [AutoCompleteController::class, 'atlet'])->name('autocomplete.atlet');
     Route::get('/autocomplete/waktu', [AutoCompleteController::class, 'waktu'])->name('autocomplete.waktu');
+
+    // Download Juknis event
+    Route::get('/events/{event}/juknis', [PendaftaranController::class, 'downloadJuknis'])->name('event.juknis.download');
 });
 
 /*
@@ -68,6 +71,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // --- Event Management ---
     Route::resource('events', Admin\EventController::class);
+    Route::get('/events/{event}/juknis', [Admin\EventController::class, 'downloadJuknis'])->name('events.juknis.download');
 
     // --- Kelompok Umur (nested under event) ---
     Route::prefix('events/{event}/ku')->name('events.ku.')->group(function () {

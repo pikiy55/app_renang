@@ -12,6 +12,7 @@ use App\Services\AutoMatchService;
 use App\Services\DeadlineService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PendaftaranController extends Controller
 {
@@ -130,7 +131,14 @@ class PendaftaranController extends Controller
             ->with('nomorLomba')
             ->get();
 
-        return view('perkumpulan.pendaftaran.create', compact('event', 'kelompokUmur'));
+        // Ambil daftar pendaftaran milik klub ini untuk event ini
+        // (untuk ditampilkan di frontend agar nomor yang sudah terdaftar di-disabled)
+        $pendaftaranSudahAda = Pendaftaran::where('event_id', $event->id)
+            ->where('user_id', Auth::id())
+            ->get(['nama_atlet', 'kelompok_umur_id', 'nomor_lomba_id'])
+            ->toArray();
+
+        return view('perkumpulan.pendaftaran.create', compact('event', 'kelompokUmur', 'pendaftaranSudahAda'));
     }
 
     /**
@@ -142,14 +150,28 @@ class PendaftaranController extends Controller
             return back()->with('error', 'Deadline pendaftaran sudah berakhir.');
         }
 
-        $data              = $request->validated();
-        $nomorLombaIds     = $data['nomor_lomba_ids'];
-        $namaAtlet         = $data['nama_atlet'];
+        $data               = $request->validated();
+        $nomorLombaIds      = $data['nomor_lomba_ids'];
+        $namaAtlet          = $data['nama_atlet'];
+        $kelompokUmurId     = $data['kelompok_umur_id'];
         $limitWaktuPerNomor = $data['limit_waktu_per_nomor'] ?? [];
-        $daftarNomor       = [];
+        $daftarNomor        = [];
+        $daftarDuplikat     = [];
 
         foreach ($nomorLombaIds as $nomorLombaId) {
             $nomorLomba = \App\Models\NomorLomba::findOrFail($nomorLombaId);
+
+            // ── Cek duplikat: atlet + event + KU + nomor yang sama ──
+            $sudahTerdaftar = Pendaftaran::where('event_id', $event->id)
+                ->where('nama_atlet', $namaAtlet)
+                ->where('kelompok_umur_id', $kelompokUmurId)
+                ->where('nomor_lomba_id', $nomorLombaId)
+                ->exists();
+
+            if ($sudahTerdaftar) {
+                $daftarDuplikat[] = "{$nomorLomba->nama_nomor} ({$nomorLomba->jarak}m {$nomorLomba->gaya})";
+                continue; // Lewati, jangan insert ulang
+            }
 
             // Cek apakah pelatih mengisi waktu untuk nomor ini
             $inputWaktu = isset($limitWaktuPerNomor[$nomorLombaId]) && $limitWaktuPerNomor[$nomorLombaId] !== ''
@@ -173,7 +195,7 @@ class PendaftaranController extends Controller
             Pendaftaran::create([
                 'event_id'         => $event->id,
                 'user_id'          => Auth::id(),
-                'kelompok_umur_id' => $data['kelompok_umur_id'],
+                'kelompok_umur_id' => $kelompokUmurId,
                 'nomor_lomba_id'   => $nomorLombaId,
                 'nama_atlet'       => $namaAtlet,
                 'tanggal_lahir'    => $data['tanggal_lahir'],
@@ -186,9 +208,25 @@ class PendaftaranController extends Controller
             $daftarNomor[] = "{$nomorLomba->nama_nomor} ({$nomorLomba->jarak}m {$nomorLomba->gaya})";
         }
 
-        $jumlah     = count($nomorLombaIds);
-        $listNomor  = implode(', ', $daftarNomor);
-        $successMsg = "Atlet {$namaAtlet} berhasil didaftarkan ke {$jumlah} nomor lomba: {$listNomor}.";
+        // Tidak ada satupun yang berhasil didaftarkan (semua duplikat)
+        if (empty($daftarNomor) && !empty($daftarDuplikat)) {
+            $listDuplikat = implode(', ', $daftarDuplikat);
+            return back()
+                ->withInput()
+                ->with('error', "Atlet {$namaAtlet} sudah terdaftar di nomor berikut dalam event & KU yang sama: {$listDuplikat}. Tidak ada data baru yang disimpan.");
+        }
+
+        // Sebagian berhasil, sebagian duplikat
+        $successMsg = '';
+        if (!empty($daftarNomor)) {
+            $jumlah    = count($daftarNomor);
+            $listNomor = implode(', ', $daftarNomor);
+            $successMsg .= "Atlet {$namaAtlet} berhasil didaftarkan ke {$jumlah} nomor lomba: {$listNomor}.";
+        }
+        if (!empty($daftarDuplikat)) {
+            $listDuplikat = implode(', ', $daftarDuplikat);
+            $successMsg .= " (Dilewati karena sudah terdaftar: {$listDuplikat})";
+        }
 
         return redirect()->route('perkumpulan.event.dashboard', $event)->with('success', $successMsg);
     }
@@ -249,5 +287,20 @@ class PendaftaranController extends Controller
         $pendaftaran->delete();
 
         return back()->with('success', "Data pendaftaran {$namaAtlet} berhasil dibatalkan.");
+    }
+
+    /**
+     * Download file juknis event.
+     */
+    public function downloadJuknis(Event $event)
+    {
+        if (!$event->file_juknis || !Storage::disk('public')->exists($event->file_juknis)) {
+            abort(404, 'File juknis tidak ditemukan.');
+        }
+
+        $ext      = pathinfo($event->file_juknis, PATHINFO_EXTENSION);
+        $filename = 'Juknis_' . str_replace(' ', '_', $event->nama_event) . '.' . $ext;
+
+        return Storage::disk('public')->download($event->file_juknis, $filename);
     }
 }

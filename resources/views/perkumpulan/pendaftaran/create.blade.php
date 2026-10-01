@@ -68,8 +68,16 @@
 
                     <!-- Pemilihan Kategori Lomba -->
                     <div>
-                        <label for="kelompok_umur_id" class="block text-sm font-bold text-slate-700 mb-1">Kelompok Umur (KU) <span class="text-red-500">*</span></label>
-                        <select name="kelompok_umur_id" id="kelompok_umur_id" required
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="kelompok_umur_id" class="block text-sm font-bold text-slate-700">Kelompok Umur (KU) <span class="text-red-500">*</span></label>
+                            <span id="ku-lock-badge" class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                KU otomatis &mdash; tidak dapat diubah
+                            </span>
+                        </div>
+                        <!-- Hidden input agar value tetap terkirim saat select di-disabled -->
+                        <input type="hidden" name="kelompok_umur_id" id="kelompok_umur_id_hidden">
+                        <select id="kelompok_umur_id" required
                             class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4 bg-slate-50 hover:bg-white transition-colors">
                             <option value="">-- Pilih Kelompok Umur --</option>
                             @foreach($kelompokUmur as $ku)
@@ -82,6 +90,7 @@
                                 </option>
                             @endforeach
                         </select>
+                        <p class="mt-1.5 text-xs text-slate-400" id="ku-hint">KU akan terisi otomatis saat tanggal lahir dimasukkan.</p>
                     </div>
 
                     <!-- Nomor Lomba — Checklist + input waktu per nomor -->
@@ -152,6 +161,10 @@
         const autoMatchRoute    = `{{ route('perkumpulan.autocomplete.waktu') }}`;
         const oldLimitWaktu     = @json(old('limit_waktu_per_nomor', []));
 
+        // Data pendaftaran yang sudah ada (dikirim dari controller)
+        // Format: [{nama_atlet, kelompok_umur_id, nomor_lomba_id}, ...]
+        const pendaftaranSudahAda = @json($pendaftaranSudahAda ?? []);
+
         let timeoutId;
 
         // ─────────────────────────────────────────────
@@ -181,14 +194,14 @@
                                 `;
                                 div.addEventListener('click', () => {
                                     inputNama.value = atlet.nama_atlet;
-                                    if (atlet.tanggal_lahir) {
-                                        inputTglLahir.value = atlet.tanggal_lahir;
-                                        autoDetectKU();
-                                    }
                                     if (atlet.jenis_kelamin) {
                                         inputGender.value = atlet.jenis_kelamin;
-                                        updateNomorLombaChecklist();
                                     }
+                                    if (atlet.tanggal_lahir) {
+                                        inputTglLahir.value = atlet.tanggal_lahir;
+                                    }
+                                    // Panggil autoDetectKU sekali setelah gender & tgl lahir terisi
+                                    autoDetectKU();
                                     resultsContainer.classList.add('hidden');
                                 });
                                 resultsContainer.appendChild(div);
@@ -210,6 +223,11 @@
         // ─────────────────────────────────────────────
         // 2. Auto-detect KU dari Tanggal Lahir
         // ─────────────────────────────────────────────
+        const kuLockBadge   = document.getElementById('ku-lock-badge');
+        const kuHint        = document.getElementById('ku-hint');
+        const kuHiddenInput = document.getElementById('kelompok_umur_id_hidden');
+        let   kuIsLocked    = false;
+
         function getUmur(tglLahir) {
             if (!tglLahir) return null;
             const today = new Date();
@@ -220,9 +238,65 @@
             return umur;
         }
 
+        function lockKU(matched, umur) {
+            selectKu.value    = matched.value;
+            kuHiddenInput.value = matched.value;
+            selectKu.disabled = true;
+            kuIsLocked        = true;
+
+            // Tampilkan badge lock
+            kuLockBadge.classList.remove('hidden');
+            // Update hint
+            if (kuHint) {
+                kuHint.textContent = `🔒 KU dikunci otomatis berdasarkan umur ${umur} tahun. Untuk mengubah, hapus tanggal lahir terlebih dahulu.`;
+                kuHint.className   = 'mt-1.5 text-xs text-amber-600 font-medium';
+            }
+            // Tunjukkan suggestion banner
+            kuSuggestionText.textContent = `✓ KU otomatis terdeteksi: ${matched.textContent.trim()} (Umur: ${umur} tahun)`;
+            kuSuggestion.classList.remove('hidden');
+        }
+
+        function unlockKU() {
+            selectKu.disabled   = false;
+            kuHiddenInput.value = selectKu.value;
+            kuIsLocked          = false;
+
+            kuLockBadge.classList.add('hidden');
+            kuSuggestion.classList.add('hidden');
+            if (kuHint) {
+                kuHint.textContent = 'KU akan terisi otomatis saat tanggal lahir dimasukkan.';
+                kuHint.className   = 'mt-1.5 text-xs text-slate-400';
+            }
+        }
+
         function autoDetectKU() {
-            const umur = getUmur(inputTglLahir.value);
-            if (umur === null) { kuSuggestion.classList.add('hidden'); return; }
+            const tgl    = inputTglLahir.value;
+            const gender = inputGender.value;
+            const umur   = getUmur(tgl);
+
+            // Jika tanggal lahir belum diisi
+            if (!tgl || umur === null) {
+                unlockKU();
+                kuSuggestion.classList.add('hidden');
+                if (kuHint) {
+                    kuHint.textContent = 'KU akan terisi otomatis setelah tanggal lahir & jenis kelamin diisi.';
+                    kuHint.className   = 'mt-1.5 text-xs text-slate-400';
+                }
+                updateNomorLombaChecklist();
+                return;
+            }
+
+            // Jika jenis kelamin belum dipilih
+            if (!gender) {
+                unlockKU();
+                kuSuggestion.classList.add('hidden');
+                if (kuHint) {
+                    kuHint.textContent = '⚠ Pilih jenis kelamin terlebih dahulu untuk mendapatkan KU yang sesuai.';
+                    kuHint.className   = 'mt-1.5 text-xs text-orange-500 font-medium';
+                }
+                updateNomorLombaChecklist();
+                return;
+            }
 
             const options = Array.from(selectKu.options);
             let matched   = null;
@@ -234,16 +308,22 @@
             }
 
             if (matched) {
-                selectKu.value = matched.value;
-                kuSuggestionText.textContent = `✓ KU otomatis terdeteksi: ${matched.textContent.trim()} (Umur: ${umur} tahun)`;
-                kuSuggestion.classList.remove('hidden');
+                lockKU(matched, umur);
             } else {
+                // Tidak ada KU yang cocok — tetap biarkan user memilih manual
+                unlockKU();
                 kuSuggestion.classList.add('hidden');
+                if (kuHint) {
+                    kuHint.textContent = '⚠ Tidak ada KU yang cocok untuk umur ini. Silakan pilih KU secara manual.';
+                    kuHint.className   = 'mt-1.5 text-xs text-orange-500 font-medium';
+                }
             }
             updateNomorLombaChecklist();
         }
 
         inputTglLahir.addEventListener('change', autoDetectKU);
+        // Re-trigger deteksi KU setiap kali jenis kelamin berubah
+        inputGender.addEventListener('change', autoDetectKU);
 
         // ─────────────────────────────────────────────
         // 3. Render Checklist Nomor Lomba + Input Waktu
@@ -406,6 +486,7 @@
             });
 
             updateCounter();
+            markDuplicateNomors(); // Tandai nomor yang sudah terdaftar
         }
 
         function checkBtnAutoMatch(btn, input) {
@@ -416,7 +497,7 @@
         }
 
         function updateCounter() {
-            const total   = itemsContainer.querySelectorAll('.nomor-checkbox').length;
+            const total   = itemsContainer.querySelectorAll('.nomor-checkbox:not([data-duplicate])').length;
             const checked = itemsContainer.querySelectorAll('.nomor-checkbox:checked').length;
             counter.textContent = `${checked} dari ${total} nomor lomba dipilih`;
             counter.className = checked > 0
@@ -424,11 +505,78 @@
                 : 'mt-2 text-xs font-medium text-right text-slate-400';
         }
 
-        selectKu.addEventListener('change', updateNomorLombaChecklist);
-        inputGender.addEventListener('change', updateNomorLombaChecklist);
+        // ─────────────────────────────────────────────
+        // Tandai nomor lomba yang sudah terdaftar sebagai duplikat
+        // ─────────────────────────────────────────────
+        function markDuplicateNomors() {
+            const namaAtlet  = inputNama.value.trim().toLowerCase();
+            const kuId       = parseInt(selectKu.value);
+
+            // Reset semua duplikat badge dulu
+            itemsContainer.querySelectorAll('[data-duplicate="true"]').forEach(cb => {
+                cb.removeAttribute('data-duplicate');
+                cb.disabled = false;
+                // Hapus badge duplikat jika ada
+                const badge = cb.closest('label')?.querySelector('.duplicate-badge');
+                if (badge) badge.remove();
+                // Restore label opacity
+                const lbl = cb.closest('label');
+                if (lbl) lbl.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+
+            if (!namaAtlet || !kuId) return;
+
+            itemsContainer.querySelectorAll('.nomor-checkbox').forEach(cb => {
+                const nomorId = parseInt(cb.value);
+
+                const isDuplicate = pendaftaranSudahAda.some(p =>
+                    p.nama_atlet.toLowerCase() === namaAtlet &&
+                    parseInt(p.kelompok_umur_id) === kuId &&
+                    parseInt(p.nomor_lomba_id) === nomorId
+                );
+
+                if (isDuplicate) {
+                    cb.checked  = false;
+                    cb.disabled = true;
+                    cb.setAttribute('data-duplicate', 'true');
+
+                    // Sembunyikan panel waktu jika terbuka
+                    const panel = cb.closest('.transition-colors')?.querySelector('.waktu-panel');
+                    if (panel) panel.classList.add('hidden');
+
+                    // Tambahkan badge merah ke label
+                    const lbl = cb.closest('label');
+                    if (lbl && !lbl.querySelector('.duplicate-badge')) {
+                        lbl.classList.add('opacity-60', 'cursor-not-allowed');
+                        const badge = document.createElement('span');
+                        badge.className = 'duplicate-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-600 border border-red-200 shrink-0';
+                        badge.innerHTML = `❌ Sudah Terdaftar`;
+                        // Sisipkan badge setelah nama nomor
+                        const namaNomorEl = lbl.querySelector('.flex.items-center.gap-2');
+                        if (namaNomorEl) namaNomorEl.appendChild(badge);
+                    }
+                }
+            });
+
+            updateCounter();
+        }
+
+        // Sinkronkan hidden input saat user memilih KU secara manual (saat tidak di-lock)
+        selectKu.addEventListener('change', () => {
+            if (!kuIsLocked) {
+                kuHiddenInput.value = selectKu.value;
+            }
+            updateNomorLombaChecklist();
+        });
+        // inputGender sudah ditangani di dalam autoDetectKU, tidak perlu listener ganda
+
+        // Saat nama atlet berubah, re-cek duplikat
+        inputNama.addEventListener('input', () => markDuplicateNomors());
+        inputNama.addEventListener('change', () => markDuplicateNomors());
 
         // Trigger pada load untuk old() data
         if (selectKu.value) {
+            kuHiddenInput.value = selectKu.value;
             updateNomorLombaChecklist();
         }
     });
