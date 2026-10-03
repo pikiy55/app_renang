@@ -171,7 +171,7 @@
         {{-- TAB 1: MASTER DATA ATLET PERKUMPULAN --}}
         <div id="tab-content-master" class="tab-pane p-5 sm:p-6">
             {{-- Top Toolbar --}}
-            <div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <span>Daftar Atlet Terdaftar pada Perkumpulan</span>
@@ -180,30 +180,42 @@
                         </span>
                     </h3>
                     <p class="text-xs text-slate-500 mt-0.5">
-                        Data atlet dan riwayat waktu perkumpulan yang siap digunakan otomatis saat pendaftaran event kejuaraan.
+                        Database seluruh atlet yang terdaftar dalam perkumpulan dan riwayat catatan waktu kejuaraan.
                     </p>
                 </div>
 
-                {{-- Search Bar --}}
-                <form action="{{ route('perkumpulan.rekap') }}" method="GET" class="flex items-center gap-2">
-                    <input type="hidden" name="tab" value="master">
-                    <div class="relative w-full sm:w-64">
-                        <input type="text"
-                               name="search_atlet"
-                               value="{{ request('search_atlet') }}"
-                               placeholder="Cari nama atlet..."
-                               class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
-                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    @if(request('search_atlet'))
-                        <a href="{{ route('perkumpulan.rekap', ['tab' => 'master']) }}" class="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
-                            Reset
-                        </a>
-                    @endif
-                    <button type="submit" class="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
-                        Cari
+                {{-- Toolbar Actions (Tambah Atlet & Search Bar) --}}
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
+                    <button type="button"
+                            onclick="openTambahAtletModal()"
+                            class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span>Tambah Atlet</span>
                     </button>
-                </form>
+
+                    {{-- Search Bar --}}
+                    <form action="{{ route('perkumpulan.rekap') }}" method="GET" class="flex items-center gap-2 flex-1 sm:flex-initial">
+                        <input type="hidden" name="tab" value="master">
+                        <div class="relative w-full sm:w-64">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input type="text"
+                                   name="search_atlet"
+                                   value="{{ request('search_atlet') }}"
+                                   placeholder="Cari nama atlet..."
+                                   class="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                        </div>
+                        @if(request('search_atlet'))
+                            <a href="{{ route('perkumpulan.rekap', ['tab' => 'master']) }}" class="shrink-0 px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                                Reset
+                            </a>
+                        @endif
+                        <button type="submit" class="shrink-0 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm">
+                            Cari
+                        </button>
+                    </form>
+                </div>
             </div>
 
             {{-- Master Atlet Table --}}
@@ -266,8 +278,10 @@
                                                 <div class="text-sm font-bold text-slate-800 leading-snug">
                                                     {{ $atlet->nama_atlet }}
                                                 </div>
-                                                <div class="text-xs text-slate-400 mt-0.5">
-                                                    {{ $atlet->total_nomor }} nomor lomba tersimpan
+                                                <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                                                    <span>{{ $atlet->total_nomor }} catatan waktu</span>
+                                                    <span>•</span>
+                                                    <span class="{{ $atlet->total_daftar > 0 ? 'text-indigo-600 font-medium' : 'text-slate-400' }}">{{ $atlet->total_daftar }} lomba event</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -308,12 +322,14 @@
                                     {{-- Nomor & Limit Waktu Preview --}}
                                     <td class="px-5 py-4">
                                         <div class="flex flex-wrap gap-1.5 max-w-md">
-                                            @foreach($atlet->riwayat->take(3) as $rw)
+                                            @forelse($atlet->riwayat->take(3) as $rw)
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-700 border border-slate-200">
                                                     <span class="font-medium">{{ $rw->jarak }}m {{ ucfirst($rw->gaya) }}:</span>
                                                     <span class="font-mono font-bold text-indigo-600">{{ $rw->limit_waktu }}</span>
                                                 </span>
-                                            @endforeach
+                                            @empty
+                                                <span class="text-xs text-slate-400 italic">Belum ada catatan limit waktu</span>
+                                            @endforelse
                                             @if($atlet->riwayat->count() > 3)
                                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-600 border border-indigo-100">
                                                     +{{ $atlet->riwayat->count() - 3 }} lainnya
@@ -324,12 +340,48 @@
 
                                     {{-- Aksi --}}
                                     <td class="px-4 py-4 whitespace-nowrap text-center">
-                                        <button type="button"
-                                                onclick='openRiwayatModal(@json($atlet->nama_atlet), @json($atlet->riwayat))'
-                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-200 shadow-sm">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                            Detail Waktu
-                                        </button>
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            {{-- Detail Waktu & Event Modal --}}
+                                            <button type="button"
+                                                    onclick='openRiwayatModal(@json($atlet))'
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-200 shadow-sm"
+                                                    title="Lihat Detail Riwayat & Keikutsertaan Event">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                <span>Detail</span>
+                                            </button>
+
+                                            {{-- Tambah Catatan Waktu --}}
+                                            <button type="button"
+                                                    onclick='openTambahWaktuModal(@json($atlet->nama_atlet))'
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200 shadow-sm"
+                                                    title="Tambah Catatan Limit Waktu">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                                <span>+ Waktu</span>
+                                            </button>
+
+                                            {{-- Edit Profil Atlet --}}
+                                            <button type="button"
+                                                    onclick='openEditAtletModal(@json($atlet->nama_atlet), @json($atlet->tanggal_lahir ? $atlet->tanggal_lahir->format("Y-m-d") : ""), @json($atlet->jenis_kelamin))'
+                                                    class="p-1.5 rounded-lg text-amber-600 hover:text-amber-700 hover:bg-amber-50 border border-slate-200 transition-colors"
+                                                    title="Edit Profil Atlet">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </button>
+
+                                            {{-- Hapus Atlet --}}
+                                            <form action="{{ route('perkumpulan.atlet.destroy') }}"
+                                                  method="POST"
+                                                  class="inline-block"
+                                                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus atlet {{ $atlet->nama_atlet }} dari daftar perkumpulan? Data riwayat waktu atlet ini akan terhapus.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <input type="hidden" name="nama_atlet" value="{{ $atlet->nama_atlet }}">
+                                                <button type="submit"
+                                                        class="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 transition-colors"
+                                                        title="Hapus Atlet">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -338,17 +390,26 @@
                 </div>
             @else
                 <div class="bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-12 text-center">
-                    <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-500">
+                    <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-500 shadow-sm">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     </div>
                     <h4 class="text-base font-bold text-slate-800 mb-1">Belum Ada Data Atlet Terdaftar</h4>
-                    <p class="text-sm text-slate-500 max-w-md mx-auto mb-4">
-                        Data atlet perkumpulan dapat di-import melalui file Excel oleh Administrator atau akan tersimpan saat atlet didaftarkan ke event kejuaraan.
+                    <p class="text-sm text-slate-500 max-w-md mx-auto mb-5">
+                        Data seluruh atlet yang terdaftar dalam perkumpulan Anda akan ditampilkan di sini. Anda dapat menambahkan atlet baru, mengimpor dari Excel, atau atlet akan otomatis tercatat saat Anda mendaftarkannya ke event kejuaraan.
                     </p>
-                    <a href="{{ route('perkumpulan.dashboard') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        Daftarkan Atlet ke Event
-                    </a>
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <button type="button"
+                                onclick="openTambahAtletModal()"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Tambah Atlet Baru
+                        </button>
+                        <a href="{{ route('perkumpulan.dashboard') }}"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm">
+                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Daftarkan Atlet ke Event
+                        </a>
+                    </div>
                 </div>
             @endif
         </div>
@@ -384,20 +445,22 @@
 
                     {{-- Search Nama --}}
                     <div class="relative w-44 sm:w-56">
+                        <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
                         <input type="text"
                                name="search_pendaftaran"
                                value="{{ request('search_pendaftaran') }}"
                                placeholder="Cari atlet..."
                                class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
 
                     @if(request('event_id') || request('search_pendaftaran'))
-                        <a href="{{ route('perkumpulan.rekap', ['tab' => 'pendaftaran']) }}" class="px-2.5 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                        <a href="{{ route('perkumpulan.rekap', ['tab' => 'pendaftaran']) }}" class="shrink-0 px-2.5 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
                             Reset
                         </a>
                     @endif
-                    <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors">
+                    <button type="submit" class="shrink-0 px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
                         Filter
                     </button>
                 </form>
@@ -632,17 +695,249 @@
     </div>
 </div>
 
-{{-- Modal Detail Riwayat Waktu Atlet --}}
+{{-- Modal Tambah Atlet Perkumpulan --}}
+<div id="modal-tambah-atlet" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden animate-fadeIn">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+        <form action="{{ route('perkumpulan.atlet.store') }}" method="POST">
+            @csrf
+            <div class="px-6 py-4 bg-gradient-to-r from-indigo-700 to-indigo-800 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-white shadow-inner">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white leading-tight">Tambah Atlet Perkumpulan</h3>
+                        <p class="text-xs text-indigo-200">Daftarkan atlet ke database klub</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeTambahAtletModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Nama Lengkap Atlet <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="nama_atlet" required placeholder="Contoh: Muhammad Farhan"
+                           class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Jenis Kelamin <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="jenis_kelamin" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="putra">Putra</option>
+                            <option value="putri">Putri</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Tanggal Lahir <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="date" name="tanggal_lahir" required
+                               class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                {{-- Catatan Waktu Awal (Opsional) --}}
+                <div class="pt-3 border-t border-slate-200">
+                    <span class="text-xs font-bold text-slate-600 block mb-2">Catatan Waktu Awal (Opsional)</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[11px] text-slate-500 mb-1">Jarak (m)</label>
+                            <input type="number" name="jarak" placeholder="50" min="25"
+                                   class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-500 mb-1">Gaya</label>
+                            <select name="gaya" class="w-full px-2 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Pilih Gaya</option>
+                                <option value="bebas">Bebas</option>
+                                <option value="dada">Dada</option>
+                                <option value="punggung">Punggung</option>
+                                <option value="kupu">Kupu-kupu</option>
+                                <option value="ganti_perorangan">Ganti Perorangan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-500 mb-1">Limit Waktu</label>
+                            <input type="text" name="limit_waktu" placeholder="00:32.50"
+                                   class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button type="button" onclick="closeTambahAtletModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm">
+                    Simpan Atlet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Modal Edit Profil Atlet --}}
+<div id="modal-edit-atlet" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden animate-fadeIn">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+        <form action="{{ route('perkumpulan.atlet.update') }}" method="POST">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="old_nama_atlet" id="edit-atlet-old-nama">
+
+            <div class="px-6 py-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-white shadow-inner">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white leading-tight">Edit Data Atlet</h3>
+                        <p class="text-xs text-amber-100">Perbarui identitas profil atlet perkumpulan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEditAtletModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Nama Lengkap Atlet <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="nama_atlet" id="edit-atlet-nama" required
+                           class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Jenis Kelamin <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="jenis_kelamin" id="edit-atlet-gender" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="putra">Putra</option>
+                            <option value="putri">Putri</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Tanggal Lahir <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="date" name="tanggal_lahir" id="edit-atlet-tgl-lahir" required
+                               class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button type="button" onclick="closeEditAtletModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Modal Tambah Catatan Waktu --}}
+<div id="modal-tambah-waktu" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden animate-fadeIn">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+        <form action="{{ route('perkumpulan.atlet.riwayat.store') }}" method="POST">
+            @csrf
+            <input type="hidden" name="nama_atlet" id="tambah-waktu-nama-atlet">
+
+            <div class="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-white shadow-inner">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white leading-tight">Tambah Catatan Waktu</h3>
+                        <p class="text-xs text-emerald-100" id="tambah-waktu-display-nama">Nama Atlet</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeTambahWaktuModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Jarak Lomba <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="jarak" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="25">25 meter</option>
+                            <option value="50" selected>50 meter</option>
+                            <option value="100">100 meter</option>
+                            <option value="200">200 meter</option>
+                            <option value="400">400 meter</option>
+                            <option value="800">800 meter</option>
+                            <option value="1500">1500 meter</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Gaya Renang <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="gaya" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="bebas">Bebas</option>
+                            <option value="dada">Dada</option>
+                            <option value="punggung">Punggung</option>
+                            <option value="kupu">Kupu-kupu</option>
+                            <option value="ganti_perorangan">Ganti Perorangan</option>
+                            <option value="ganti_estafet">Ganti Estafet</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Limit Waktu / Rekor Terbaik <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" name="limit_waktu" required placeholder="00:32.50 atau 01:15.00"
+                           class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
+                    <p class="text-[11px] text-slate-400 mt-1">Format: Menit:Detik.milidetik (contoh: 00:32.45 atau 01:12.80)</p>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button type="button" onclick="closeTambahWaktuModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm">
+                    Simpan Catatan Waktu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Modal Detail Profil, Riwayat Waktu & Event Atlet --}}
 <div id="modal-riwayat" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden animate-fadeIn">
-    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
         <div class="px-6 py-4 bg-gradient-to-r from-indigo-700 to-indigo-800 text-white flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-white shadow-inner">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold text-white shadow-inner text-base" id="modal-atlet-avatar">
+                    A
                 </div>
                 <div>
                     <h3 class="text-base font-bold text-white leading-tight" id="modal-atlet-nama">Nama Atlet</h3>
-                    <p class="text-xs text-indigo-200">Riwayat Catatan Limit Waktu Perkumpulan</p>
+                    <div class="flex items-center gap-2 mt-0.5 text-xs text-indigo-200">
+                        <span id="modal-atlet-gender">Putra</span>
+                        <span>•</span>
+                        <span id="modal-atlet-ttl">Tgl Lahir</span>
+                    </div>
                 </div>
             </div>
             <button type="button" onclick="closeRiwayatModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
@@ -650,24 +945,64 @@
             </button>
         </div>
 
-        <div class="p-6 max-h-[70vh] overflow-y-auto">
-            <div class="overflow-hidden rounded-xl border border-slate-200">
-                <table class="min-w-full divide-y divide-slate-200 text-xs">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-bold text-slate-500 uppercase">Jarak & Gaya</th>
-                            <th class="px-4 py-3 text-center font-bold text-slate-500 uppercase">Limit Waktu</th>
-                            <th class="px-4 py-3 text-right font-bold text-slate-500 uppercase">Diperbarui</th>
-                        </tr>
-                    </thead>
-                    <tbody id="modal-riwayat-body" class="bg-white divide-y divide-slate-100">
-                        {{-- Injected via JS --}}
-                    </tbody>
-                </table>
+        <div class="p-6 max-h-[75vh] overflow-y-auto space-y-6">
+            {{-- Section 1: Catatan Limit Waktu --}}
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Catatan Limit Waktu Perkumpulan</span>
+                    </h4>
+                    <button type="button" id="modal-btn-tambah-waktu" onclick="" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        <span>+ Waktu</span>
+                    </button>
+                </div>
+
+                <div class="overflow-hidden rounded-xl border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200 text-xs">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-2.5 text-left font-bold text-slate-500 uppercase">Jarak & Gaya</th>
+                                <th class="px-4 py-2.5 text-center font-bold text-slate-500 uppercase">Limit Waktu</th>
+                                <th class="px-4 py-2.5 text-center font-bold text-slate-500 uppercase">Diperbarui</th>
+                                <th class="px-3 py-2.5 text-right font-bold text-slate-500 uppercase">Hapus</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-riwayat-body" class="bg-white divide-y divide-slate-100">
+                            {{-- Injected via JS --}}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">
+                    Catatan waktu ini digunakan sebagai acuan auto-complete saat mendaftar event kejuaraan.
+                </p>
             </div>
-            <p class="text-[11px] text-slate-400 mt-3 text-center">
-                Waktu ini otomatis dijadikan acuan saat mendaftarkan atlet pada kejuaraan renang.
-            </p>
+
+            {{-- Section 2: Keikutsertaan Event Kejuaraan --}}
+            <div class="pt-4 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <span>Riwayat Pendaftaran di Event Kejuaraan</span>
+                    </h4>
+                </div>
+
+                <div class="overflow-hidden rounded-xl border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200 text-xs">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-2.5 text-left font-bold text-slate-500 uppercase">Event</th>
+                                <th class="px-4 py-2.5 text-left font-bold text-slate-500 uppercase">Nomor Lomba</th>
+                                <th class="px-4 py-2.5 text-center font-bold text-slate-500 uppercase">Waktu Daftar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-pendaftaran-body" class="bg-white divide-y divide-slate-100">
+                            {{-- Injected via JS --}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end">
@@ -682,10 +1017,8 @@
 <script>
     // Tab switching logic
     function switchTab(tab) {
-        // Hide all panes
         document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
 
-        // Reset all buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
             btn.classList.add('text-slate-600', 'hover:text-slate-900', 'hover:bg-slate-100');
@@ -696,7 +1029,6 @@
             }
         });
 
-        // Activate selected tab
         const activePane = document.getElementById('tab-content-' + tab);
         const activeBtn = document.getElementById('tab-btn-' + tab);
 
@@ -711,41 +1043,129 @@
             }
         }
 
-        // Update URL hash without scroll
         history.replaceState(null, null, '#tab=' + tab);
     }
 
-    // Modal Riwayat
-    function openRiwayatModal(namaAtlet, riwayatData) {
-        document.getElementById('modal-atlet-nama').innerText = namaAtlet;
-        const tbody = document.getElementById('modal-riwayat-body');
-        tbody.innerHTML = '';
+    // Modal Tambah Atlet
+    function openTambahAtletModal() {
+        document.getElementById('modal-tambah-atlet').classList.remove('hidden');
+    }
+    function closeTambahAtletModal() {
+        document.getElementById('modal-tambah-atlet').classList.add('hidden');
+    }
+
+    // Modal Edit Atlet
+    function openEditAtletModal(nama, tglLahir, gender) {
+        document.getElementById('edit-atlet-old-nama').value = nama;
+        document.getElementById('edit-atlet-nama').value = nama;
+        document.getElementById('edit-atlet-tgl-lahir').value = tglLahir;
+        document.getElementById('edit-atlet-gender').value = gender;
+        document.getElementById('modal-edit-atlet').classList.remove('hidden');
+    }
+    function closeEditAtletModal() {
+        document.getElementById('modal-edit-atlet').classList.add('hidden');
+    }
+
+    // Modal Tambah Waktu
+    function openTambahWaktuModal(nama) {
+        document.getElementById('tambah-waktu-nama-atlet').value = nama;
+        document.getElementById('tambah-waktu-display-nama').innerText = 'Atlet: ' + nama;
+        document.getElementById('modal-tambah-waktu').classList.remove('hidden');
+    }
+    function closeTambahWaktuModal() {
+        document.getElementById('modal-tambah-waktu').classList.add('hidden');
+    }
+
+    // Modal Riwayat Lengkap Atlet
+    function openRiwayatModal(atlet) {
+        const nama = typeof atlet === 'string' ? atlet : atlet.nama_atlet;
+        const riwayatData = atlet.riwayat || [];
+        const pendaftaranData = atlet.pendaftarans || [];
+
+        document.getElementById('modal-atlet-nama').innerText = nama;
+        document.getElementById('modal-atlet-avatar').innerText = nama.charAt(0).toUpperCase();
+
+        const genderText = atlet.jenis_kelamin ? (atlet.jenis_kelamin.charAt(0).toUpperCase() + atlet.jenis_kelamin.slice(1)) : 'Putra';
+        document.getElementById('modal-atlet-gender').innerText = genderText;
+
+        let ttlInfo = 'Tgl Lahir: -';
+        if (atlet.tanggal_lahir) {
+            const d = new Date(atlet.tanggal_lahir);
+            ttlInfo = 'Lahir: ' + d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        document.getElementById('modal-atlet-ttl').innerText = ttlInfo;
+
+        document.getElementById('modal-btn-tambah-waktu').setAttribute('onclick', `openTambahWaktuModal('${nama.replace(/'/g, "\\'")}')`);
+
+        // Populate Table Riwayat Waktu
+        const tbodyRiwayat = document.getElementById('modal-riwayat-body');
+        tbodyRiwayat.innerHTML = '';
 
         if (!riwayatData || riwayatData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-6 text-center text-slate-400 italic">Belum ada catatan limit waktu.</td></tr>';
+            tbodyRiwayat.innerHTML = '<tr><td colspan="4" class="px-4 py-5 text-center text-slate-400 italic">Belum ada catatan limit waktu tersimpan.</td></tr>';
         } else {
             riwayatData.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition-colors';
 
-                const gayaCapitalized = item.gaya.charAt(0).toUpperCase() + item.gaya.slice(1);
+                const gayaCapitalized = item.gaya ? (item.gaya.charAt(0).toUpperCase() + item.gaya.slice(1)) : '-';
                 const updatedDate = item.updated_at ? new Date(item.updated_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
 
                 tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-800">
+                    <td class="px-4 py-2.5 whitespace-nowrap font-medium text-slate-800">
                         <span class="inline-block px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold mr-1.5">${item.jarak}m</span>
                         ${gayaCapitalized}
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                    <td class="px-4 py-2.5 whitespace-nowrap text-center">
                         <span class="font-mono font-bold text-indigo-600 bg-indigo-50/50 px-2 py-0.5 rounded border border-indigo-100 text-xs">
-                            ${item.limit_waktu}
+                            ${item.limit_waktu || 'NT'}
                         </span>
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-right text-slate-400">
+                    <td class="px-4 py-2.5 whitespace-nowrap text-center text-slate-400">
                         ${updatedDate}
                     </td>
+                    <td class="px-3 py-2.5 whitespace-nowrap text-right">
+                        ${item.id ? `
+                            <form action="/perkumpulan/atlet/riwayat-waktu/${item.id}" method="POST" onsubmit="return confirm('Hapus catatan waktu ini?');" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors" title="Hapus catatan waktu">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </form>
+                        ` : '-'}
+                    </td>
                 `;
-                tbody.appendChild(tr);
+                tbodyRiwayat.appendChild(tr);
+            });
+        }
+
+        // Populate Table Pendaftaran Event
+        const tbodyPendaftaran = document.getElementById('modal-pendaftaran-body');
+        tbodyPendaftaran.innerHTML = '';
+
+        if (!pendaftaranData || pendaftaranData.length === 0) {
+            tbodyPendaftaran.innerHTML = '<tr><td colspan="3" class="px-4 py-5 text-center text-slate-400 italic">Belum ada riwayat pendaftaran event kejuaraan.</td></tr>';
+        } else {
+            pendaftaranData.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                const eventNama = p.event ? p.event.nama_event : '-';
+                const nomorNama = p.nomor_lomba ? `${p.nomor_lomba.nama_nomor} (${p.nomor_lomba.jarak}m ${p.nomor_lomba.gaya})` : '-';
+                const limitWaktu = p.limit_waktu || (p.status_waktu === 'NT' ? 'NT' : '-');
+
+                tr.innerHTML = `
+                    <td class="px-4 py-2.5 whitespace-nowrap font-medium text-slate-800">
+                        ${eventNama}
+                    </td>
+                    <td class="px-4 py-2.5 whitespace-nowrap text-slate-600">
+                        ${nomorNama}
+                    </td>
+                    <td class="px-4 py-2.5 whitespace-nowrap text-center font-mono font-bold text-xs ${limitWaktu === 'NT' ? 'text-amber-600' : 'text-slate-700'}">
+                        ${limitWaktu}
+                    </td>
+                `;
+                tbodyPendaftaran.appendChild(tr);
             });
         }
 

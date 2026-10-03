@@ -37,23 +37,15 @@ class ExportController extends Controller
             return back()->with('error', 'Belum ada data pendaftaran untuk event ini.');
         }
 
-        foreach ($pendaftaranPerKlub as $userId => $pendaftaran) {
-            $namaKlub = $pendaftaran->first()->user->nama_klub ?? 'Klub ' . $userId;
+        $headers = ['No', 'Klub', 'Nama Atlet', 'Tgl Lahir', 'Jenis Kelamin', 'KU', 'Nomor Lomba', 'Limit Waktu', 'Status'];
 
-            // Buat sheet baru per klub (maks 31 karakter untuk nama sheet Excel)
-            $sheetTitle = substr($namaKlub, 0, 31);
-            $sheet      = new \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet($spreadsheet, $sheetTitle);
-            $spreadsheet->addSheet($sheet);
-
-            // Header
-            $headers = ['No', 'Nama Atlet', 'Tgl Lahir', 'Jenis Kelamin', 'KU', 'Nomor Lomba', 'Limit Waktu', 'Status'];
+        // Helper: tulis satu sheet berisi daftar pendaftaran
+        $tulisSheet = function ($sheet, $rows) use ($headers) {
             foreach ($headers as $col => $header) {
-                $cell = $sheet->getCellByColumnAndRow($col + 1, 1);
-                $cell->setValue($header);
+                $sheet->setCellValue([$col + 1, 1], $header);
             }
 
-            // Style header
-            $headerRange = 'A1:H1';
+            $headerRange = 'A1:I1';
             $sheet->getStyle($headerRange)->getFont()->setBold(true);
             $sheet->getStyle($headerRange)->getFill()
                 ->setFillType(Fill::FILL_SOLID)
@@ -61,24 +53,51 @@ class ExportController extends Controller
             $sheet->getStyle($headerRange)->getFont()->getColor()->setRGB('FFFFFF');
             $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-            // Data rows
-            foreach ($pendaftaran->values() as $idx => $p) {
+            foreach ($rows->values() as $idx => $p) {
                 $row = $idx + 2;
-                $sheet->getCellByColumnAndRow(1, $row)->setValue($idx + 1);
-                $sheet->getCellByColumnAndRow(2, $row)->setValue($p->nama_atlet);
-                $sheet->getCellByColumnAndRow(3, $row)->setValue($p->tanggal_lahir?->format('d/m/Y'));
-                $sheet->getCellByColumnAndRow(4, $row)->setValue(ucfirst($p->jenis_kelamin));
-                $sheet->getCellByColumnAndRow(5, $row)->setValue($p->kelompokUmur->nama_ku ?? '-');
-                $sheet->getCellByColumnAndRow(6, $row)->setValue($p->nomorLomba->nama_nomor ?? '-');
-                $sheet->getCellByColumnAndRow(7, $row)->setValue($p->limit_waktu ?? '-');
-                $sheet->getCellByColumnAndRow(8, $row)->setValue($p->status_waktu);
+                $sheet->setCellValue([1, $row], $idx + 1);
+                $sheet->setCellValue([2, $row], $p->user->nama_klub ?? ('Klub ' . $p->user_id));
+                $sheet->setCellValue([3, $row], $p->nama_atlet);
+                $sheet->setCellValue([4, $row], $p->tanggal_lahir?->format('d/m/Y'));
+                $sheet->setCellValue([5, $row], ucfirst((string) $p->jenis_kelamin));
+                $sheet->setCellValue([6, $row], $p->kelompokUmur->nama_ku ?? '-');
+                $sheet->setCellValue([7, $row], $p->nomorLomba->nama_nomor ?? '-');
+                $sheet->setCellValue([8, $row], $p->limit_waktu ?? '-');
+                $sheet->setCellValue([9, $row], $p->status_waktu);
             }
 
-            // Auto-width kolom
-            foreach (range('A', 'H') as $col) {
+            foreach (range('A', 'I') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
+        };
+
+        // Sheet pertama: rekap SEMUA pendaftaran event
+        $semua = $pendaftaranPerKlub->flatten(1);
+        $sheetSemua = new \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet($spreadsheet, 'Semua Pendaftaran');
+        $spreadsheet->addSheet($sheetSemua);
+        $tulisSheet($sheetSemua, $semua);
+
+        // Sheet berikutnya: satu sheet per klub
+        $judulTerpakai = ['Semua Pendaftaran'];
+        foreach ($pendaftaranPerKlub as $userId => $pendaftaran) {
+            $namaKlub = $pendaftaran->first()->user->nama_klub ?? 'Klub ' . $userId;
+
+            // Maks 31 karakter & tanpa karakter terlarang; pastikan unik
+            $base  = substr(preg_replace('/[\\\\\/\?\*\[\]:]/', '-', $namaKlub), 0, 28);
+            $judul = $base;
+            $n     = 2;
+            while (in_array($judul, $judulTerpakai, true)) {
+                $judul = $base . ' ' . $n++;
+            }
+            $judulTerpakai[] = $judul;
+
+            $sheet = new \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet($spreadsheet, $judul);
+            $spreadsheet->addSheet($sheet);
+            $tulisSheet($sheet, $pendaftaran);
         }
+
+        $spreadsheet->setActiveSheetIndex(0);
+
 
         // Log audit
         $this->audit->log(Auth::user(), 'export', $event, [], [

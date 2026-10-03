@@ -41,6 +41,13 @@ Route::middleware(['auth', 'perkumpulan'])->prefix('perkumpulan')->name('perkump
     // Rekap semua pendaftaran (dashboard lama)
     Route::get('/rekap', [PendaftaranController::class, 'rekap'])->name('rekap');
 
+    // Kelola Master Data Atlet Perkumpulan
+    Route::post('/atlet', [PendaftaranController::class, 'storeAtlet'])->name('atlet.store');
+    Route::put('/atlet/update', [PendaftaranController::class, 'updateAtlet'])->name('atlet.update');
+    Route::post('/atlet/riwayat-waktu', [PendaftaranController::class, 'storeRiwayatWaktu'])->name('atlet.riwayat.store');
+    Route::delete('/atlet/riwayat-waktu/{riwayat}', [PendaftaranController::class, 'destroyRiwayatWaktu'])->name('atlet.riwayat.destroy');
+    Route::delete('/atlet/hapus', [PendaftaranController::class, 'destroyAtlet'])->name('atlet.destroy');
+
     // Dashboard per Event (halaman pisah)
     Route::get('/events/{event}', [PendaftaranController::class, 'eventPendaftaran'])->name('event.dashboard');
 

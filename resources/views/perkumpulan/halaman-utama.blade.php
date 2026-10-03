@@ -19,15 +19,15 @@
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20">
             {{-- Breadcrumb --}}
-            <div class="mb-6">
-                <a href="{{ route('perkumpulan.dashboard') }}" class="inline-flex items-center text-sm font-medium text-indigo-200/70 hover:text-white transition-colors group">
+            <div class="mb-5">
+                <a href="{{ route('perkumpulan.dashboard') }}" class="inline-flex items-center text-xs sm:text-sm font-medium text-indigo-200/80 hover:text-white transition-colors group">
                     <svg class="mr-2 w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Kembali ke halama utama 
+                    Kembali ke Halaman Utama
                 </a>
             </div>
 
-            <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between">
-                <div class="flex-1">
+            <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                <div class="flex-1 min-w-0">
                     <div class="flex flex-wrap gap-2 mb-3">
                         @if($isDeadlinePassed)
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-500/80 text-white backdrop-blur-md border border-red-500/50">
@@ -44,43 +44,49 @@
                             {{ $event->tanggal_mulai->format('d M Y') }} – {{ $event->tanggal_selesai->format('d M Y') }}
                         </span>
                     </div>
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-1">
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-1.5">
                         {{ $event->nama_event }}
                     </h1>
-                    <p class="text-indigo-200/70 text-sm flex items-center">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <p class="text-indigo-200/80 text-xs sm:text-sm flex items-center">
+                        <svg class="w-4 h-4 mr-1.5 shrink-0 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         {{ $event->lokasi }}
                     </p>
                 </div>
 
-                <div class="mt-6 lg:mt-0 flex items-center space-x-3">
-                    {{-- Stats Cards --}}
-                    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2.5 text-center">
-                        <p class="text-xl font-extrabold text-white">{{ $myPendaftaran->total() }}</p>
-                        <p class="text-[11px] text-indigo-200/70 font-medium">Atlet Terdaftar</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2.5 text-center">
-                        <p class="text-xl font-extrabold text-white">{{ $sisaWaktu }}</p>
-                        <p class="text-[11px] text-indigo-200/70 font-medium">Sisa Waktu</p>
+                {{-- Action & Stats Area (Mobile Responsive) --}}
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    {{-- Stats Cards (Grid 2 Kolom di Mobile, Flex di Desktop) --}}
+                    <div class="grid grid-cols-2 gap-2.5 sm:flex sm:items-center sm:space-x-3">
+                        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2.5 text-center flex flex-col justify-center">
+                            <p class="text-xl font-extrabold text-white leading-none">{{ $myPendaftaran->total() }}</p>
+                            <p class="text-[11px] text-indigo-200/80 font-medium mt-1">Atlet Terdaftar</p>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2.5 text-center flex flex-col justify-center min-w-[120px]">
+                            <p class="text-sm sm:text-base font-extrabold text-white leading-tight">{{ $sisaWaktu }}</p>
+                            <p class="text-[11px] text-indigo-200/80 font-medium mt-1">Sisa Waktu</p>
+                        </div>
                     </div>
 
-                    @if($event->file_juknis)
-                        <a href="{{ route('perkumpulan.event.juknis.download', $event) }}"
-                           class="inline-flex items-center justify-center px-4 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/30 text-white font-semibold text-sm hover:bg-white/20 hover:-translate-y-0.5 transition-all duration-200">
-                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                            </svg>
-                            Unduh Juknis
-                        </a>
-                    @endif
+                    {{-- Action Buttons --}}
+                    <div class="flex items-center gap-2.5">
+                        @if($event->file_juknis)
+                            <a href="{{ route('perkumpulan.event.juknis.download', $event) }}"
+                               class="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/30 text-white font-semibold text-xs sm:text-sm hover:bg-white/20 hover:-translate-y-0.5 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span>Unduh Juknis</span>
+                            </a>
+                        @endif
 
-                    @if(!$isDeadlinePassed)
-                        <a href="{{ route('perkumpulan.pendaftaran.create', $event) }}"
-                           class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-white text-indigo-900 font-bold text-sm shadow-lg hover:bg-indigo-50 hover:-translate-y-0.5 transition-all duration-200">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                            Daftar Atlet
-                        </a>
-                    @endif
+                        @if(!$isDeadlinePassed)
+                            <a href="{{ route('perkumpulan.pendaftaran.create', $event) }}"
+                               class="flex-1 sm:flex-initial inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white text-indigo-900 font-bold text-xs sm:text-sm shadow-lg hover:bg-indigo-50 hover:-translate-y-0.5 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                <span>Daftar Atlet</span>
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -108,12 +114,12 @@
             </div>
         @endif
 
-        {{-- Deadline Info Bar --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-            <div class="flex items-center space-x-6">
+        {{-- Deadline Info Bar (Responsive Mobile) --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
                 <div class="flex items-center">
-                    <div class="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center mr-3">
-                        <svg class="w-4.5 h-4.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mr-3 shrink-0">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                     <div>
                         <p class="text-xs text-slate-500 font-medium">Batas Pendaftaran</p>
@@ -122,13 +128,12 @@
                         </p>
                     </div>
                 </div>
-                <div class="hidden sm:block w-px h-8 bg-slate-200"></div>
-                <div class="hidden sm:flex items-center">
-                    <div class="w-9 h-9 rounded-lg {{ $isDeadlinePassed ? 'bg-red-100' : 'bg-emerald-100' }} flex items-center justify-center mr-3">
-                        <svg class="w-4.5 h-4.5 {{ $isDeadlinePassed ? 'text-red-600' : 'text-emerald-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-xl {{ $isDeadlinePassed ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600' }} flex items-center justify-center mr-3 shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-500 font-medium">Status</p>
+                        <p class="text-xs text-slate-500 font-medium">Status Event</p>
                         <p class="text-sm font-bold {{ $isDeadlinePassed ? 'text-red-600' : 'text-emerald-600' }}">
                             {{ $isDeadlinePassed ? 'Deadline Berakhir' : $sisaWaktu }}
                         </p>
@@ -137,7 +142,7 @@
             </div>
             @if(!$isDeadlinePassed)
                 <a href="{{ route('perkumpulan.pendaftaran.create', $event) }}"
-                   class="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+                   class="w-full md:w-auto inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                     Daftarkan Atlet Baru
                 </a>

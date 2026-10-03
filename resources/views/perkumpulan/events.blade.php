@@ -29,20 +29,22 @@
             </div>
 
             {{-- Right: Stats + Button --}}
-            <div class="flex items-center gap-3">
-                <div class="bg-white/10 rounded-xl px-5 py-3 text-center min-w-[90px]">
-                    <p class="text-2xl font-extrabold text-white leading-none">{{ $events->count() }}</p>
-                    <p class="text-[11px] text-indigo-200 font-medium mt-1">Event Aktif</p>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 sm:px-5 sm:py-3 text-center">
+                        <p class="text-xl sm:text-2xl font-extrabold text-white leading-none">{{ $events->count() }}</p>
+                        <p class="text-[10px] sm:text-[11px] text-indigo-200 font-medium mt-1">Event Aktif</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 sm:px-5 sm:py-3 text-center">
+                        <p class="text-xl sm:text-2xl font-extrabold text-white leading-none">{{ $totalMasterAtlet ?? 0 }}</p>
+                        <p class="text-[10px] sm:text-[11px] text-indigo-200 font-medium mt-1">Atlet Klub</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 sm:px-5 sm:py-3 text-center">
+                        <p class="text-xl sm:text-2xl font-extrabold text-white leading-none">{{ $totalPendaftaran }}</p>
+                        <p class="text-[10px] sm:text-[11px] text-indigo-200 font-medium mt-1">Pendaftaran</p>
+                    </div>
                 </div>
-                <div class="bg-white/10 rounded-xl px-5 py-3 text-center min-w-[90px]">
-                    <p class="text-2xl font-extrabold text-white leading-none">{{ $totalMasterAtlet ?? 0 }}</p>
-                    <p class="text-[11px] text-indigo-200 font-medium mt-1">Atlet Klub</p>
-                </div>
-                <div class="bg-white/10 rounded-xl px-5 py-3 text-center min-w-[90px]">
-                    <p class="text-2xl font-extrabold text-white leading-none">{{ $totalPendaftaran }}</p>
-                    <p class="text-[11px] text-indigo-200 font-medium mt-1">Pendaftaran</p>
-                </div>
-                <a href="{{ route('perkumpulan.rekap') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-indigo-700 rounded-xl text-sm font-bold shadow-sm hover:bg-indigo-50 transition-colors">
+                <a href="{{ route('perkumpulan.rekap') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-indigo-700 rounded-xl text-sm font-bold shadow-sm hover:bg-indigo-50 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     Data Atlet & Rekap
                 </a>
