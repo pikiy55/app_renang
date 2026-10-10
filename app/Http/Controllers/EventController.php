@@ -36,6 +36,8 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
+        abort_unless($event->is_active, 404);
+
         $event->load('kelompokUmur.nomorLomba');
 
         $isDeadlinePassed = $this->deadlineService->isDeadlinePassed($event);

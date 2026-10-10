@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -5,7 +6,135 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/*
+|--------------------------------------------------------------------------
+| Design tokens — generated with UI UX Pro Max
+| Style: Data-Dense Dashboard · Palette: Blue data + amber highlights
+| Source of truth: design-system/app-renang-admin/MASTER.md
+|--------------------------------------------------------------------------
+*/
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Fira Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Brand (primary #1E40AF, secondary #3B82F6) */
+    --color-brand-50: #eff6ff;
+    --color-brand-100: #dbeafe;
+    --color-brand-200: #bfdbfe;
+    --color-brand-300: #93c5fd;
+    --color-brand-400: #60a5fa;
+    --color-brand-500: #3b82f6;
+    --color-brand-600: #2563eb;
+    --color-brand-700: #1e40af;
+    --color-brand-800: #1e3a8a;
+    --color-brand-900: #172554;
+
+    /* Accent / CTA (#D97706) */
+    --color-accent-50: #fffbeb;
+    --color-accent-100: #fef3c7;
+    --color-accent-500: #f59e0b;
+    --color-accent-600: #d97706;
+    --color-accent-700: #b45309;
+
+    /* Semantic surfaces */
+    --color-surface: #ffffff;
+    --color-canvas: #f8fafc;
+    --color-line: #e2e8f0;
+    --color-ink: #0f172a;
+    --color-ink-muted: #475569;
+
+    --radius-card: 0.875rem;
+    --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
+    --shadow-card-hover: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+
+    --animate-fade-up: fade-up 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Reusable components (dense spacing scale 8–32px)
+|--------------------------------------------------------------------------
+*/
+@layer components {
+    .card {
+        @apply bg-surface border border-line rounded-card shadow-card;
+    }
+    .card-header {
+        @apply flex items-center justify-between gap-3 px-5 py-4 border-b border-line;
+    }
+    .card-title {
+        @apply text-sm font-semibold text-ink;
+    }
+    .card-subtitle {
+        @apply text-xs text-ink-muted mt-0.5;
+    }
+
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 min-h-10 px-4 rounded-lg text-sm font-semibold
+            cursor-pointer select-none transition-colors duration-200
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600
+            disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .btn-primary {
+        @apply bg-brand-700 text-white hover:bg-brand-800 active:bg-brand-900;
+    }
+    .btn-secondary {
+        @apply bg-white text-ink border border-line hover:bg-slate-50 hover:border-slate-300;
+    }
+    .btn-ghost {
+        @apply text-ink-muted hover:bg-slate-100 hover:text-ink;
+    }
+    .btn-icon {
+        @apply inline-flex items-center justify-center size-10 rounded-lg text-ink-muted cursor-pointer
+            transition-colors duration-200 hover:bg-slate-100 hover:text-ink
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+
+    .badge {
+        @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap ring-1 ring-inset;
+    }
+    .badge-success { @apply bg-emerald-50 text-emerald-800 ring-emerald-600/20; }
+    .badge-warning { @apply bg-accent-50 text-accent-700 ring-accent-600/25; }
+    .badge-danger  { @apply bg-red-50 text-red-800 ring-red-600/20; }
+    .badge-neutral { @apply bg-slate-100 text-slate-700 ring-slate-500/20; }
+    .badge-info    { @apply bg-brand-50 text-brand-800 ring-brand-600/20; }
+
+    .nav-link {
+        @apply flex items-center gap-3 min-h-10 px-3 rounded-lg text-sm font-medium text-slate-300
+            transition-colors duration-200 hover:bg-white/5 hover:text-white
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400;
+    }
+    .nav-link[aria-current='page'] {
+        @apply bg-brand-600/20 text-white ring-1 ring-inset ring-brand-400/30;
+    }
+    .nav-link[aria-current='page'] svg {
+        @apply text-brand-300;
+    }
+
+    .table-th {
+        @apply px-5 py-3 text-left text-xs font-semibold text-ink-muted uppercase tracking-wider whitespace-nowrap;
+    }
+    .table-td {
+        @apply px-5 py-3 text-sm text-ink whitespace-nowrap;
+    }
+
+    .num {
+        @apply font-mono tabular-nums;
+    }
+}
+
+/* Respect reduced-motion preferences (UI UX Pro Max checklist) */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
