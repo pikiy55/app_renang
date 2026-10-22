@@ -51,6 +51,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        $this->ensureManageable($user);
         $user->load('pendaftaran.event');
         return view('admin.users.show', compact('user'));
     }
@@ -60,6 +61,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
+        $this->ensureManageable($user);
         return view('admin.users.edit', compact('user'));
     }
 
@@ -68,6 +70,8 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $this->ensureManageable($user);
+
         $data = $request->validate([
             'name'      => ['required', 'string', 'max:255'],
             'nama_klub' => ['required', 'string', 'max:255'],
@@ -96,9 +100,20 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        $this->ensureManageable($user);
+
         $namaKlub = $user->nama_klub;
         $user->delete();
         return redirect()->route('admin.users.index')
             ->with('success', "Akun '{$namaKlub}' berhasil dihapus.");
+    }
+
+    /**
+     * Pastikan target adalah akun perkumpulan (bukan admin) dan bukan akun yang sedang login.
+     */
+    private function ensureManageable(User $user): void
+    {
+        abort_unless($user->isPerkumpulan(), 403, 'Hanya akun perkumpulan yang dapat dikelola.');
+        abort_if($user->id === auth()->id(), 403, 'Anda tidak dapat mengelola akun Anda sendiri.');
     }
 }

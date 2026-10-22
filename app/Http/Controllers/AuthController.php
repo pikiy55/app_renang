@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -30,19 +32,27 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        $throttleKey = Str::transliterate(Str::lower($credentials['email']) . '|' . $request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
             throw ValidationException::withMessages([
-                'email' => 'Email atau password salah.',
+                'email' => "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.",
+            ])->status(429);
+        }
+
+        // is_active ikut dicek bersamaan dengan password agar akun nonaktif
+        // tidak bisa dites passwordnya.
+        $credentials['is_active'] = true;
+
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::hit($throttleKey, 60);
+            throw ValidationException::withMessages([
+                'email' => 'Email atau password salah, atau akun dinonaktifkan.',
             ]);
         }
 
-        // Cek akun aktif
-        if (! Auth::user()->is_active) {
-            Auth::logout();
-            throw ValidationException::withMessages([
-                'email' => 'Akun Anda telah dinonaktifkan. Hubungi Admin.',
-            ]);
-        }
+        RateLimiter::clear($throttleKey);
 
         $request->session()->regenerate();
 
@@ -67,7 +77,7 @@ class AuthController extends Controller
     private function redirectByRole()
     {
         return Auth::user()->isAdmin()
-            ? redirect()->route('admin.events.index')
+            ? redirect()->route('admin.dashboard')
             : redirect()->route('perkumpulan.dashboard');
     }
 }

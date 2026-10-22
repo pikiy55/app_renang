@@ -122,6 +122,8 @@ class PendaftaranController extends Controller
      */
     public function eventPendaftaran(Event $event)
     {
+        abort_unless($event->is_active, 404);
+
         $event->load('kelompokUmur');
 
         $myPendaftaran = Pendaftaran::where('user_id', Auth::id())
@@ -141,6 +143,8 @@ class PendaftaranController extends Controller
      */
     public function create(Event $event)
     {
+        abort_unless($event->is_active, 404);
+
         if ($this->deadline->isDeadlinePassed($event)) {
             return back()->with('error', 'Deadline pendaftaran untuk event ini sudah berakhir.');
         }
@@ -164,20 +168,56 @@ class PendaftaranController extends Controller
      */
     public function store(StorePendaftaranRequest $request, Event $event)
     {
+        abort_unless($event->is_active, 404);
+
         if ($this->deadline->isDeadlinePassed($event)) {
             return back()->with('error', 'Deadline pendaftaran sudah berakhir.');
         }
 
         $data               = $request->validated();
-        $nomorLombaIds      = $data['nomor_lomba_ids'];
-        $namaAtlet          = $data['nama_atlet'];
+        $nomorLombaIds      = array_unique($data['nomor_lomba_ids']);
+        $namaAtlet          = trim($data['nama_atlet']);
         $kelompokUmurId     = $data['kelompok_umur_id'];
         $limitWaktuPerNomor = $data['limit_waktu_per_nomor'] ?? [];
         $daftarNomor        = [];
         $daftarDuplikat     = [];
 
+        // ── Validasi kepemilikan: KU harus milik event ini ──
+        $ku = KelompokUmur::where('id', $kelompokUmurId)
+            ->where('event_id', $event->id)
+            ->first();
+
+        if (!$ku) {
+            return back()->withInput()->with('error', 'Kelompok umur tidak valid untuk event ini.');
+        }
+
+        // ── Validasi usia atlet terhadap rentang KU (usia dihitung saat event dimulai) ──
+        $tanggalLahir = \Illuminate\Support\Carbon::parse($data['tanggal_lahir']);
+        $usia         = $tanggalLahir->diffInYears($event->tanggal_mulai);
+
+        if (($ku->usia_min !== null && $usia < $ku->usia_min) ||
+            ($ku->usia_max !== null && $usia > $ku->usia_max)) {
+            return back()->withInput()->with('error', "Usia atlet ({$usia} tahun) tidak sesuai dengan {$ku->nama_ku}.");
+        }
+
+        // ── Validasi tiap nomor: harus milik KU ini & sesuai jenis kelamin ──
+        $nomorValid = \App\Models\NomorLomba::whereIn('id', $nomorLombaIds)
+            ->where('kelompok_umur_id', $ku->id)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($nomorLombaIds as $nid) {
+            $n = $nomorValid->get($nid);
+            if (!$n) {
+                return back()->withInput()->with('error', 'Terdapat nomor lomba yang tidak valid untuk kelompok umur ini.');
+            }
+            if ($n->jenis_kelamin !== 'campuran' && $n->jenis_kelamin !== $data['jenis_kelamin']) {
+                return back()->withInput()->with('error', "Nomor {$n->nama_nomor} tidak sesuai dengan jenis kelamin atlet.");
+            }
+        }
+
         foreach ($nomorLombaIds as $nomorLombaId) {
-            $nomorLomba = \App\Models\NomorLomba::findOrFail($nomorLombaId);
+            $nomorLomba = $nomorValid->get($nomorLombaId);
 
             // ── Cek duplikat: atlet + event + KU + nomor yang sama ──
             $sudahTerdaftar = Pendaftaran::where('event_id', $event->id)

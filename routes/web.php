@@ -76,6 +76,9 @@ Route::middleware(['auth', 'perkumpulan'])->prefix('perkumpulan')->name('perkump
 */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
+    // --- Dashboard ---
+    Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
+
     // --- Event Management ---
     Route::resource('events', Admin\EventController::class);
     Route::get('/events/{event}/juknis', [Admin\EventController::class, 'downloadJuknis'])->name('events.juknis.download');

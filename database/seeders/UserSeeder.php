@@ -40,6 +40,7 @@ class UserSeeder extends Seeder
                     'whatsapp'  => $club['whatsapp'],
                     'is_active' => true,
                 ]
+                
             );
         }
     }
